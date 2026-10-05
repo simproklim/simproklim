@@ -1,0 +1,1861 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Panel Admin - SIMPROKLIM Kota Ambon</title>
+  
+  <!-- Font & Icon -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Leaflet CSS untuk Peta WebGIS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #f1f5f9;
+      display: flex;
+      min-height: 100vh;
+      color: #1e293b;
+      position: relative;
+    }
+
+    /* TOPBAR MOBILE (TOMBOL BURGER DI SEBELAH KIRI) */
+    .mobile-header {
+      display: none;
+      background: #0f172a;
+      color: #fff;
+      padding: 12px 16px;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 12px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1100;
+      height: 60px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .mobile-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .mobile-brand img {
+      width: 32px;
+      height: 32px;
+      background: #fff;
+      border-radius: 50%;
+      padding: 2px;
+    }
+
+    .mobile-brand h2 {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .menu-toggle-btn {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 22px;
+      cursor: pointer;
+      padding: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* OVERLAY MOBILE SIDEBAR */
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(2px);
+      z-index: 1150;
+    }
+
+    .sidebar-overlay.active {
+      display: block;
+    }
+
+    /* SIDEBAR NAVIGATION */
+    .sidebar {
+      width: 260px;
+      background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      flex-shrink: 0;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      box-shadow: 4px 0 15px rgba(0,0,0,0.05);
+      transition: transform 0.3s ease;
+      z-index: 1200;
+      overflow-y: auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-left: 4px;
+    }
+
+    .brand-logo-wrapper {
+      width: 44px;
+      height: 44px;
+      background-color: #ffffff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5px;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+      flex-shrink: 0;
+    }
+
+    .brand-logo {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .brand h2 {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+
+    .brand span {
+      font-size: 11px;
+      color: #94a3b8;
+      display: block;
+      font-weight: 500;
+    }
+
+    .nav-menu {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-grow: 1;
+    }
+
+    .nav-item a {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      color: #94a3b8;
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      min-height: 44px;
+    }
+
+    .nav-item a:hover {
+      background-color: rgba(255, 255, 255, 0.06);
+      color: #f8fafc;
+    }
+
+    .nav-item.active a {
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+    }
+
+    /* CONTAINER TOMBOL LOGOUT & INFO USER */
+    .sidebar-footer {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .user-info {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-bottom: 10px;
+      text-align: center;
+      word-break: break-all;
+    }
+
+    .logout-btn {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      background: rgba(239, 68, 68, 0.12);
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      min-height: 44px;
+    }
+
+    .logout-btn:hover, .logout-btn:active {
+      background: #ef4444;
+      color: #ffffff;
+      border-color: #ef4444;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+    }
+
+    /* MAIN CONTENT */
+    .main-content {
+      flex: 1;
+      padding: 32px;
+      overflow-y: auto;
+    }
+
+    .content-section {
+      display: none;
+    }
+
+    .content-section.active {
+      display: block;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-header {
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: 800;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      letter-spacing: -0.5px;
+    }
+
+    .section-subtitle {
+      font-size: 14px;
+      color: #64748b;
+      margin-top: 4px;
+    }
+
+    /* KARTU STATISTIK */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: #ffffff;
+      padding: 20px 16px;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+      transition: transform 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .stat-card.total .stat-icon { background: #e0f2fe; color: #0284c7; }
+    .stat-card.kecamatan .stat-icon { background: #f1f5f9; color: #475569; }
+    .stat-card.pratama .stat-icon { background: #dcfce7; color: #16a34a; }
+    .stat-card.madya .stat-icon { background: #fef9c3; color: #ca8a04; }
+    .stat-card.utama .stat-icon { background: #fee2e2; color: #dc2626; }
+    .stat-card.lestari .stat-icon { background: #f3e8ff; color: #9333ea; }
+
+    .stat-info h4 {
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+
+    .stat-info p {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    /* MAP CONTAINER */
+    .map-card-wrapper {
+      position: relative;
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    }
+
+    #map {
+      width: 100%;
+      height: 520px;
+      border-radius: 12px;
+      z-index: 1;
+    }
+
+    .floating-legend {
+      position: absolute;
+      bottom: 35px;
+      right: 35px;
+      z-index: 1000;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(8px);
+      padding: 14px 18px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      border: 1px solid #e2e8f0;
+    }
+
+    .floating-legend h5 {
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #0f172a;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+
+    .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .dot-green { background-color: #22c55e; }
+    .dot-yellow { background-color: #eab308; }
+    .dot-red { background-color: #ef4444; }
+    .dot-purple { background-color: #a855f7; }
+
+    /* POPUP STYLING */
+    .leaflet-popup-content-wrapper {
+      border-radius: 16px !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.22) !important;
+      border: 1px solid #e2e8f0;
+    }
+
+    .leaflet-popup-content {
+      margin: 0 !important;
+      width: 290px !important;
+      line-height: 1.4 !important;
+      max-height: 420px;
+      overflow-y: auto;
+    }
+
+    .popup-card {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #ffffff;
+    }
+
+    .popup-hero {
+      position: relative;
+      height: 110px;
+      background: #0f172a;
+    }
+
+    .popup-hero img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .popup-hero-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(15,23,42,0.85) 100%);
+    }
+
+    .popup-badge-kat {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 800;
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .popup-header-info {
+      position: absolute;
+      bottom: 8px;
+      left: 12px;
+      right: 12px;
+      color: #ffffff;
+    }
+
+    .popup-header-info h4 {
+      font-size: 14px;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+      line-height: 1.2;
+    }
+
+    .popup-body {
+      padding: 12px 14px 14px 14px;
+    }
+
+    .popup-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: #f8fafc;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 10px;
+      font-size: 11px;
+    }
+
+    .popup-meta-item {
+      color: #475569;
+    }
+
+    .popup-meta-item strong {
+      color: #0f172a;
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 2px;
+    }
+
+    .popup-text-multiline {
+      white-space: pre-line;
+      line-height: 1.45;
+    }
+
+    /* FITUR ACCORDION */
+    .popup-accordion-item {
+      border-radius: 10px;
+      margin-bottom: 8px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      transition: all 0.2s ease;
+    }
+
+    .popup-accordion-header {
+      width: 100%;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: none;
+      background: #f8fafc;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.2s ease;
+      min-height: 38px;
+    }
+
+    .popup-accordion-header.adaptasi-btn {
+      color: #15803d;
+      background-color: #f0fdf4;
+      border-bottom: 1px solid #bbf7d0;
+    }
+
+    .popup-accordion-header.mitigasi-btn {
+      color: #0369a1;
+      background-color: #f0f9ff;
+      border-bottom: 1px solid #bae6fd;
+    }
+
+    .popup-accordion-header .arrow-icon {
+      font-size: 10px;
+      transition: transform 0.3s ease;
+    }
+
+    .popup-accordion-body {
+      display: none;
+      padding: 8px;
+    }
+
+    .popup-accordion-body.adaptasi-bg {
+      background-color: #f0fdf4;
+    }
+
+    .popup-accordion-body.mitigasi-bg {
+      background-color: #f0f9ff;
+    }
+
+    .popup-accordion-body.show {
+      display: block;
+      animation: expandDown 0.25s ease-out;
+    }
+
+    @keyframes expandDown {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .popup-kegiatan-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .popup-kegiatan-tag {
+      font-size: 10.5px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      background: #ffffff;
+      font-weight: 600;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .popup-accordion-body.adaptasi-bg .popup-kegiatan-tag {
+      color: #166534;
+      border: 1px solid #dcfce7;
+    }
+
+    .popup-accordion-body.mitigasi-bg .popup-kegiatan-tag {
+      color: #075985;
+      border: 1px solid #e0f2fe;
+    }
+
+    .popup-drive-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: #ffffff !important;
+      text-decoration: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 8px;
+      box-shadow: 0 3px 8px rgba(2, 132, 199, 0.25);
+      transition: all 0.2s;
+      min-height: 40px;
+    }
+
+    .popup-drive-btn:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    /* CARDS & GENERAL STYLES */
+    .card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+      border: 1px solid #e2e8f0;
+      margin-bottom: 24px;
+    }
+
+    .card h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 18px;
+      color: #0f172a;
+    }
+
+    /* FORM & BUTTONS */
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+
+    .form-group select, .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 14px;
+      background-color: #fff;
+      outline: none;
+      transition: 0.2s;
+    }
+
+    .form-group select:focus, .form-group input:focus, .form-group textarea:focus {
+      border-color: #0284c7;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: 0.2s;
+      min-height: 44px;
+    }
+
+    .btn-secondary { background-color: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .btn-primary { background-color: #0284c7; color: #fff; }
+    .btn-success { background-color: #16a34a; color: #fff; }
+    .btn-danger { background-color: #ef4444; color: #fff; }
+    .btn-sm { padding: 8px 12px; font-size: 12px; border-radius: 8px; min-height: 36px; }
+
+    /* TABEL DATA LOKASI */
+    .table-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border-radius: 8px;
+    }
+
+    .custom-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: left;
+    }
+
+    .custom-table th {
+      background-color: #f8fafc;
+      color: #475569;
+      padding: 14px 12px;
+      border-bottom: 2px solid #e2e8f0;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .custom-table td {
+      padding: 14px 12px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #334155;
+      vertical-align: middle;
+    }
+
+    .table-img {
+      width: 60px;
+      height: 45px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      display: inline-block;
+      white-space: nowrap;
+    }
+
+    .badge-success { background: #dcfce7; color: #15803d; }
+    .badge-warning { background: #fef9c3; color: #a16207; }
+    .badge-danger { background: #fee2e2; color: #b91c1c; }
+    .badge-purple { background: #f3e8ff; color: #6b21a8; }
+    .badge-info { background: #e0f2fe; color: #0369a1; }
+
+    /* EDITABLE SOP & PANDUAN */
+    .editable-area {
+      padding: 18px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 10px;
+      background-color: #f8fafc;
+      min-height: 120px;
+      line-height: 1.6;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .editable-area[contenteditable="true"] {
+      border: 2px dashed #0284c7;
+      background-color: #fff;
+    }
+
+    /* MODAL POPUP FORM */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      padding: 16px;
+    }
+
+    .modal-content {
+      background: #fff;
+      padding: 24px;
+      border-radius: 16px;
+      width: 650px;
+      max-width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .badge-count {
+      background: #ef4444;
+      color: white;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      margin-left: auto;
+    }
+
+    .action-tools {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      padding: 12px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 14px;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .action-buttons-wrapper {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    /* MEDIA QUERIES (DESAIN RESPONSIF UNTUK HP KECIL HINGGA TABLET) */
+    @media (max-width: 992px) {
+      body {
+        flex-direction: column;
+      }
+
+      .mobile-header {
+        display: flex;
+      }
+
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        height: 100vh;
+        max-height: 100vh;
+        transform: translateX(-100%);
+        box-shadow: 4px 0 25px rgba(0,0,0,0.3);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .nav-menu {
+        flex-grow: 0;
+      }
+
+      .sidebar-footer {
+        margin-top: 16px;
+        padding-bottom: 24px;
+      }
+
+      .main-content {
+        padding: 80px 16px 24px 16px;
+      }
+
+      .section-title {
+        font-size: 20px;
+      }
+
+      #map {
+        height: 380px;
+      }
+
+      .floating-legend {
+        position: static;
+        margin-top: 12px;
+        box-shadow: none;
+        border: 1px solid #e2e8f0;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .form-grid-2 {
+        grid-template-columns: 1fr;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+
+      .stat-card {
+        padding: 14px 12px;
+        gap: 10px;
+      }
+
+      .stat-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 16px;
+      }
+
+      .stat-info p {
+        font-size: 18px;
+      }
+
+      .card {
+        padding: 16px;
+      }
+
+      .action-tools {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-input {
+        width: 100%;
+      }
+
+      .action-buttons-wrapper {
+        flex-direction: column;
+        width: 100%;
+      }
+
+      .action-buttons-wrapper .btn {
+        width: 100%;
+      }
+
+      .modal-content {
+        padding: 18px;
+      }
+
+      .button-group {
+        flex-direction: column;
+      }
+
+      .button-group .btn {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR MOBILE (TOMBOL BURGER DI SEBELAH KIRI) -->
+  <header class="mobile-header">
+    <button class="menu-toggle-btn" onclick="toggleSidebar()" aria-label="Buka Menu">
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="mobile-brand">
+      <img src="logo.png" alt="Logo" onerror="this.style.display='none'">
+      <h2>SIMPROKLIM Admin</h2>
+    </div>
+  </header>
+
+  <!-- OVERLAY MOBILE -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <!-- SIDEBAR MENU -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-logo-wrapper">
+        <img src="logo.png" alt="Logo SIMPROKLIM" class="brand-logo">
+      </div>
+      <div>
+        <h2>SIMPROKLIM</h2>
+        <span>Panel Kelola Admin</span>
+      </div>
+    </div>
+
+    <ul class="nav-menu">
+      <li class="nav-item active">
+        <a onclick="switchTab(event, 'detail-lokasi')">
+          <i class="fas fa-chart-pie"></i> Detail Informasi Lokasi
+        </a>
+      </li>
+      <li class="nav-item">
+        <a onclick="switchTab(event, 'tabel-lokasi')">
+          <i class="fas fa-table"></i> Tabel Data Lokasi
+        </a>
+      </li>
+      <li class="nav-item">
+        <a onclick="switchTab(event, 'pesan-saran')">
+          <i class="fas fa-envelope-open-text"></i> Pesan & Saran <span class="badge-count" id="unreadBadge">0</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a onclick="switchTab(event, 'sop-panduan')">
+          <i class="fas fa-book-open"></i> SOP & Panduan
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="publik.html" target="_blank">
+          <i class="fas fa-globe"></i> Lihat Tampilan Publik
+        </a>
+      </li>
+    </ul>
+
+    <!-- TOMBOL LOGOUT TERJANGKAU DI HP BESERTA INFORMASI ADMIN -->
+    <div class="sidebar-footer">
+      <div class="user-info" id="userEmailDisplay">Memuat akun...</div>
+      <button onclick="handleLogout()" class="logout-btn">
+        <i class="fas fa-sign-out-alt"></i> Keluar / Logout
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    
+    <!-- 1. DETAIL INFORMASI LOKASI -->
+    <div id="detail-lokasi" class="content-section active">
+      <div class="section-header">
+        <h2 class="section-title"><i class="fas fa-chart-pie" style="color: #0284c7;"></i> Detail Informasi & Peta Lokasi ProKlim</h2>
+        <p class="section-subtitle">Ringkasan statistik sebaran ProKlim dan pemetaan spasial Kota Ambon secara komprehensif.</p>
+      </div>
+      
+      <!-- STATISTIK -->
+      <div class="stats-grid">
+        <div class="stat-card total">
+          <div class="stat-icon"><i class="fas fa-map-marked-alt"></i></div>
+          <div class="stat-info">
+            <h4>Total Lokasi</h4>
+            <p id="stat-total">0 Lokasi</p>
+          </div>
+        </div>
+        <div class="stat-card kecamatan">
+          <div class="stat-icon"><i class="fas fa-city"></i></div>
+          <div class="stat-info">
+            <h4>Kecamatan</h4>
+            <p id="stat-kecamatan">0 Kecamatan</p>
+          </div>
+        </div>
+        <div class="stat-card pratama">
+          <div class="stat-icon"><i class="fas fa-seedling"></i></div>
+          <div class="stat-info">
+            <h4>Pratama</h4>
+            <p id="stat-pratama">0 Lokasi</p>
+          </div>
+        </div>
+        <div class="stat-card madya">
+          <div class="stat-icon"><i class="fas fa-leaf"></i></div>
+          <div class="stat-info">
+            <h4>Madya</h4>
+            <p id="stat-madya">0 Lokasi</p>
+          </div>
+        </div>
+        <div class="stat-card utama">
+          <div class="stat-icon"><i class="fas fa-tree"></i></div>
+          <div class="stat-info">
+            <h4>Utama</h4>
+            <p id="stat-utama">0 Lokasi</p>
+          </div>
+        </div>
+        <div class="stat-card lestari">
+          <div class="stat-icon"><i class="fas fa-award"></i></div>
+          <div class="stat-info">
+            <h4>Lestari</h4>
+            <p id="stat-lestari">0 Lokasi</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PETA WEBGIS -->
+      <div class="map-card-wrapper">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+          <h3 style="font-size:16px; font-weight:700;">Sebaran Geografis Lokasi ProKlim</h3>
+          <span style="font-size:12px; color:#64748b; background:#f1f5f9; padding:4px 10px; border-radius:20px;"><i class="fas fa-sync-alt"></i> Real-time WebGIS</span>
+        </div>
+        <div id="map"></div>
+        
+        <div class="floating-legend">
+          <h5>Kategori ProKlim</h5>
+          <div class="legend-item"><span class="dot dot-green"></span> Pratama</div>
+          <div class="legend-item"><span class="dot dot-yellow"></span> Madya</div>
+          <div class="legend-item"><span class="dot dot-red"></span> Utama</div>
+          <div class="legend-item"><span class="dot dot-purple"></span> Lestari</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. TABEL DATA LOKASI -->
+    <div id="tabel-lokasi" class="content-section">
+      <div class="section-header">
+        <h2 class="section-title"><i class="fas fa-table" style="color: #0284c7;"></i> Kelola Data Lokasi ProKlim</h2>
+        <p class="section-subtitle">Data pada tabel ini akan tersinkronisasi langsung dan ditampilkan ke Tampilan Publik.</p>
+      </div>
+      
+      <div class="card">
+        <div class="action-tools">
+          <input type="text" id="searchInput" class="search-input" onkeyup="filterTable()" placeholder="Cari lokasi, kecamatan, atau kegiatan...">
+          
+          <div class="action-buttons-wrapper">
+            <button onclick="exportToCSV()" class="btn btn-success">
+              <i class="fas fa-file-excel"></i> Download Excel
+            </button>
+            <button class="btn btn-primary" onclick="openAddModal()"><i class="fas fa-plus"></i> Tambah Data Baru</button>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Foto</th>
+                <th>Nama Kelompok ProKlim</th>
+                <th>Jenis Kelembagaan</th>
+                <th>Detail Lokasi</th>
+                <th>Kecamatan</th>
+                <th>Kategori</th>
+                <th>Koordinat (Lat, Long)</th>
+                <th>Aksi Adaptasi</th>
+                <th>Aksi Mitigasi</th>
+                <th>Drive Publik</th>
+                <th>Drive Arsip (Admin)</th>
+                <th>Tahun</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <!-- Render Dinamis via Firebase JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. PESAN & SARAN MASYARAKAT -->
+    <div id="pesan-saran" class="content-section">
+      <div class="section-header">
+        <h2 class="section-title"><i class="fas fa-envelope-open-text" style="color: #0284c7;"></i> Pesan & Saran Masyarakat</h2>
+        <p class="section-subtitle">Daftar aspirasi warga yang terhubung secara langsung dari Tampilan Publik.</p>
+      </div>
+
+      <div class="card">
+        <div class="table-container">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Tanggal</th>
+                <th>Nama Pengirim</th>
+                <th>Kontak / Email</th>
+                <th>Isi Saran / Aspirasi</th>
+                <th>Status</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="pesanTableBody">
+              <!-- Render via Firebase JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. SOP & PANDUAN -->
+    <div id="sop-panduan" class="content-section">
+      <div class="section-header">
+        <h2 class="section-title"><i class="fas fa-book-open" style="color: #0284c7;"></i> SOP & Panduan Operasional</h2>
+        <p class="section-subtitle">Petunjuk teknis pembaruan data dan verifikasi ProKlim Kota Ambon.</p>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:8px;">
+          <h3>Standard Operating Procedure (SOP) Penginputan Data</h3>
+          <button id="editSopBtn" class="btn btn-secondary btn-sm" onclick="toggleEdit('sopContent', 'editSopBtn')">
+            <i class="fas fa-edit"></i> Edit SOP
+          </button>
+        </div>
+        <div id="sopContent" class="editable-area" contenteditable="false">
+          <p><strong>1. Verifikasi Kelengkapan Lapangan:</strong> Pastikan lokasi ProKlim yang didaftarkan memiliki komponen Aksi Adaptasi dan Mitigasi yang terverifikasi oleh Tim DLHP Kota Ambon.</p>
+          <br>
+          <p><strong>2. Presisi Koordinat Spasial:</strong> Input koordinat Latitude dan Longitude wajib bersumber dari pengukuran GPS atau Google Maps agar titik WebGIS akurat.</p>
+          <br>
+          <p><strong>3. Kualitas Dokumentasi:</strong> Foto dokumentasi lokasi harus memperlihatkan aksi nyata masyarakat (seperti Bank Sampah, Penghijauan, atau PAH).</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; flex-wrap:wrap; gap:8px;">
+          <h3>Panduan Pengoperasian SIMPROKLIM</h3>
+          <button id="editGuideBtn" class="btn btn-secondary btn-sm" onclick="toggleEdit('guideContent', 'editGuideBtn')">
+            <i class="fas fa-edit"></i> Edit Panduan
+          </button>
+        </div>
+        <div id="guideContent" class="editable-area" contenteditable="false">
+          <ol style="margin-left: 20px;">
+            <li>Untuk menambah titik lokasi ProKlim baru beserta detailnya, pilih menu <strong>Tabel Data Lokasi</strong> lalu klik <strong>Tambah Data Baru</strong>.</li>
+            <li>Seluruh data kegiatan adaptasi, mitigasi, koordinat, dan foto yang disimpan akan secara otomatis tersambung ke <strong>Tampilan Publik</strong>.</li>
+            <li>Periksa aspirasi masyarakat yang masuk secara berkala pada menu <strong>Pesan & Saran</strong>.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL FORM TAMBAH / EDIT DATA LOKASI -->
+  <div id="addModal" class="modal">
+    <div class="modal-content">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+        <h3 id="modalTitle" style="font-size:18px;">Tambah Data Lokasi ProKlim Baru</h3>
+        <i class="fas fa-times" onclick="closeAddModal()" style="cursor:pointer; color:#64748b; font-size: 20px; padding: 4px;"></i>
+      </div>
+
+      <form id="addLocationForm" onsubmit="saveLocation(event)">
+        <div class="form-group">
+          <label>Nama Kelompok ProKlim</label>
+          <input type="text" id="inputNamaKelompok" placeholder="Contoh: Kelompok Iklim Kelurahan Ahusen" required>
+        </div>
+
+        <div class="form-group">
+          <label>Jenis Kelembagaan Pendukung</label>
+          <input type="text" id="inputKelembagaan" placeholder="Contoh: Kelompok Tani, Karang Taruna, Bank Sampah, dll." required>
+        </div>
+
+        <div class="form-group">
+          <label>Detail Lokasi</label>
+          <textarea id="inputAlamat" rows="2" placeholder="Contoh: Jl. Diponegoro RT 002/RW 01, Kel. Ahusen"></textarea>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Kecamatan</label>
+            <select id="inputKecamatan" required>
+              <option value="Sirimau">Sirimau</option>
+              <option value="Nusaniwe">Nusaniwe</option>
+              <option value="Baguala">Baguala</option>
+              <option value="Teluk Ambon">Teluk Ambon</option>
+              <option value="Leitimur Selatan">Leitimur Selatan</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Kategori ProKlim</label>
+            <select id="inputKategori" required>
+              <option value="ProKlim Pratama">ProKlim Pratama</option>
+              <option value="ProKlim Madya">ProKlim Madya</option>
+              <option value="ProKlim Utama">ProKlim Utama</option>
+              <option value="ProKlim Lestari">ProKlim Lestari</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Tahun Penetapan</label>
+          <input type="number" id="inputTahun" placeholder="Contoh: 2024" value="2026" required>
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Latitude (Garis Lintang)</label>
+            <input type="text" id="inputLat" placeholder="Contoh: -3.6954" required>
+          </div>
+          <div class="form-group">
+            <label>Longitude (Garis Bujur)</label>
+            <input type="text" id="inputLong" placeholder="Contoh: 128.1814" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Kegiatan Adaptasi (pisahkan dengan koma)</label>
+          <textarea id="inputAdaptasi" rows="2" placeholder="Contoh: Pengendalian kekeringan banjir dan lonsor, Peningkatan ketahanan Pangan, Pengendalian penyakit terkait iklim" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Kegiatan Mitigasi (pisahkan dengan koma)</label>
+          <textarea id="inputMitigasi" rows="2" placeholder="Contoh: Pengelolaan sampah, limbah padat dan cair, Penggunaan energi baru terbarukan, konservasi dan Penghematan energi" required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Link Foto Sampul Utama (Google Drive / URL Gambar)</label>
+          <input type="url" id="inputFotoDrive" placeholder="Masukkan link foto Google Drive atau URL gambar..." required>
+        </div>
+
+        <div class="form-group">
+          <label>📁 Link Google Drive Dokumentasi (Publik)</label>
+          <input type="url" id="inputGdrivePublik" placeholder="https://drive.google.com/drive/folders/...">
+        </div>
+
+        <div class="form-group">
+          <label>🔒 Link Google Drive Berkas/SK Kelembagaan (Arsip Internal Admin)</label>
+          <input type="url" id="inputGdriveArsip" placeholder="https://drive.google.com/drive/folders/...">
+        </div>
+
+        <div class="button-group">
+          <button type="button" class="btn btn-secondary" onclick="closeAddModal()">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Data</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- LEAFLET JS SCRIPT -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- FIREBASE & LOGIKA TERHUBUNG FIREBASE REALTIME DATABASE & AUTH -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getDatabase, ref, set, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    // Konfigurasi Firebase SIMPROKLIM Ambon
+    const firebaseConfig = {
+      apiKey: "AIzaSyA2wICAjpo6cGlEPLSCU0tmAdlwqaFHvho",
+      authDomain: "simproklim-ambon.firebaseapp.com",
+      databaseURL: "https://simproklim-ambon-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "simproklim-ambon",
+      storageBucket: "simproklim-ambon.firebasestorage.app",
+      messagingSenderId: "185945532311",
+      appId: "1:185945532311:web:213b8511e2b4a6561986d2"
+    };
+
+    // Inisialisasi Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    // ========================================================
+    // PROTEKSI KEAMANAN (AUTH GUARD) & TAMPILAN EMAIL ADMIN
+    // ========================================================
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        // User telah login
+        const emailDisplay = document.getElementById('userEmailDisplay');
+        if (emailDisplay) {
+          emailDisplay.textContent = user.email || 'Admin Logged In';
+        }
+      } else {
+        // User belum login, alihkan otomatis ke halaman login
+        window.location.href = 'index.html';
+      }
+    });
+
+    // FUNGSI LOGOUT AMAN
+    window.handleLogout = function() {
+      if (confirm("Apakah Anda yakin ingin keluar dari Panel Admin?")) {
+        signOut(auth)
+          .then(() => {
+            window.location.href = 'index.html';
+          })
+          .catch((error) => {
+            alert('Gagal logout: ' + error.message);
+          });
+      }
+    };
+
+    let mapInitialized = false;
+    let map;
+    let markersGroup;
+    let editingId = null;
+    let proklimDataList = [];
+
+    // LISTENER DATA SOP DARI FIREBASE
+    const sopRef = ref(db, 'sop_admin');
+    onValue(sopRef, (snapshot) => {
+      const sopContainer = document.getElementById('sopContent');
+      if (sopContainer && snapshot.exists()) {
+        sopContainer.innerHTML = snapshot.val();
+      }
+    });
+
+    // FUNGSI EDIT DAN SIMPAN SOP KE FIREBASE
+    window.toggleEdit = function(elementId, btnId) {
+      const area = document.getElementById(elementId);
+      const btn = document.getElementById(btnId);
+      const isEditable = area.getAttribute('contenteditable') === 'true';
+
+      if (isEditable) {
+        area.setAttribute('contenteditable', 'false');
+        btn.innerHTML = '<i class="fas fa-edit"></i> Edit';
+        btn.className = 'btn btn-secondary btn-sm';
+
+        const sopData = area.innerHTML;
+        set(ref(db, 'sop_admin'), sopData)
+          .then(() => {
+            alert('SOP berhasil diperbarui dan tersimpan di Firebase!');
+          })
+          .catch((err) => {
+            alert('Gagal menyimpan SOP: ' + err.message);
+          });
+
+      } else {
+        area.setAttribute('contenteditable', 'true');
+        area.focus();
+        btn.innerHTML = '<i class="fas fa-save"></i> Simpan';
+        btn.className = 'btn btn-success btn-sm';
+      }
+    };
+
+    // FUNGSI DESAIN FORMAT KEGIATAN BERWARNA UNTUK ACCORDION
+    function formatKegiatanBerwarna(text, type) {
+      if (!text) return '<div class="popup-kegiatan-tag"><i class="fas fa-info-circle"></i> Belum ada data</div>';
+      const icon = type === 'adaptasi' ? 'fa-leaf' : 'fa-recycle';
+      return text
+        .split(',')
+        .map(item => item.trim())
+        .filter(item => item.length > 0)
+        .map(item => `<div class="popup-kegiatan-tag"><i class="fas ${icon}" style="font-size:9px; margin-top:2px;"></i> <span>${item}</span></div>`)
+        .join('');
+    }
+
+    // FUNGSI FORMAT TEKS KELEMBAGAAN SUPAYA PISAH BARIS DENGAN RAPI
+    function formatKelembagaanText(text) {
+      if (!text) return '-';
+      return text.replace(/(\d+[\.\)])/g, '\n$1').trim();
+    }
+
+    // TOGGLE ACCORDION UNTUK POPUP PETA
+    window.toggleAccordion = function(id) {
+      const content = document.getElementById(id);
+      const header = content.previousElementSibling;
+      const arrow = header.querySelector('.arrow-icon');
+      
+      if (content.classList.contains('show')) {
+        content.classList.remove('show');
+        arrow.style.transform = 'rotate(0deg)';
+      } else {
+        content.classList.add('show');
+        arrow.style.transform = 'rotate(180deg)';
+      }
+    };
+
+    // TOGGLE SIDEBAR MOBILE
+    window.toggleSidebar = function() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('sidebarOverlay');
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('active');
+    };
+
+    // FUNGSI KONVERSI LINK GOOGLE DRIVE KE DIRECT IMAGE URL
+    function convertDriveUrl(url) {
+      if (!url) return '';
+      if (url.includes('drive.google.com')) {
+        const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) {
+          return `https://lh3.googleusercontent.com/d/${match[1]}`;
+        }
+      }
+      return url;
+    }
+
+    // LISTENER DATA REALTIME DATABASE FIREBASE
+    const proklimRef = ref(db, 'data_proklim');
+    onValue(proklimRef, (snapshot) => {
+      const data = snapshot.val();
+      proklimDataList = [];
+      if (data) {
+        Object.keys(data).forEach(key => {
+          proklimDataList.push({
+            id: key,
+            ...data[key]
+          });
+        });
+      }
+      renderTable();
+      updateMapMarkers();
+      updateStats();
+    });
+
+    // LISTENER PESAN & SARAN REALTIME DATABASE FIREBASE
+    const saranRef = ref(db, 'pesan_saran');
+    onValue(saranRef, (snapshot) => {
+      const data = snapshot.val();
+      const tbody = document.getElementById('pesanTableBody');
+      const badgeCount = document.getElementById('unreadBadge');
+
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      let saranList = [];
+      if (data) {
+        Object.keys(data).forEach(key => {
+          saranList.push({
+            id: key,
+            ...data[key]
+          });
+        });
+      }
+
+      const pendingCount = saranList.filter(s => s.status !== 'Selesai').length;
+      if (badgeCount) {
+        badgeCount.textContent = pendingCount;
+      }
+
+      if (saranList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#94a3b8; padding:20px;">Belum ada pesan atau saran masuk dari publik.</td></tr>`;
+        return;
+      }
+
+      saranList.forEach((item, index) => {
+        let badgeStatus = 'badge-warning';
+        let statusText = item.status || 'Baru';
+
+        if (statusText === 'Selesai') badgeStatus = 'badge-success';
+        if (statusText === 'Diproses') badgeStatus = 'badge-purple';
+
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td>${index + 1}</td>
+            <td><small>${item.tanggal || '-'}</small></td>
+            <td><strong>${item.nama || 'Anonim'}</strong></td>
+            <td>${item.kontak || item.email || '-'}</td>
+            <td>${item.pesan || item.saran || '-'}</td>
+            <td><span class="badge ${badgeStatus}">${statusText}</span></td>
+            <td>
+              <div style="display:flex; gap:4px;">
+                <button class="btn btn-success btn-sm" onclick="updateStatusPesan('${item.id}', 'Selesai')" title="Tandai Selesai"><i class="fas fa-check"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="deletePesan('${item.id}')" title="Hapus Pesan"><i class="fas fa-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+        `);
+      });
+    });
+
+    // RENDER TABEL ADMIN
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+
+      if (proklimDataList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="14" style="text-align:center; color:#94a3b8; padding:20px;">Belum ada data lokasi ProKlim tersimpan di Firebase.</td></tr>`;
+        return;
+      }
+
+      proklimDataList.forEach((item, index) => {
+        let badgeClass = 'badge-success';
+        if(item.kategori === 'ProKlim Madya') badgeClass = 'badge-warning';
+        if(item.kategori === 'ProKlim Utama') badgeClass = 'badge-danger';
+        if(item.kategori === 'ProKlim Lestari') badgeClass = 'badge-purple';
+
+        const gdrivePublikLink = item.gdrivePublik ? `<a href="${item.gdrivePublik}" target="_blank" style="color:#0284c7;"><i class="fas fa-external-link-alt"></i> Buka</a>` : '-';
+        const gdriveArsipLink = item.gdriveArsip ? `<a href="${item.gdriveArsip}" target="_blank" style="color:#dc2626;"><i class="fas fa-folder-open"></i> Arsip Admin</a>` : '-';
+
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td>${index + 1}</td>
+            <td><img src="${item.foto}" class="table-img" alt="Foto" onerror="this.src='https://via.placeholder.com/60x45?text=Foto';"></td>
+            <td><strong>${item.nama}</strong></td>
+            <td><span class="badge badge-info">${item.kelembagaan || 'Tidak Ada'}</span></td>
+            <td><small>${item.alamat || '-'}</small></td>
+            <td>${item.kecamatan}</td>
+            <td><span class="badge ${badgeClass}">${item.kategori}</span></td>
+            <td><small>${item.lat}, ${item.long}</small></td>
+            <td><small>${item.adaptasi}</small></td>
+            <td><small>${item.mitigasi}</small></td>
+            <td>${gdrivePublikLink}</td>
+            <td>${gdriveArsipLink}</td>
+            <td>${item.tahun}</td>
+            <td>
+              <div style="display:flex; gap:4px;">
+                <button class="btn btn-secondary btn-sm" onclick="editLocation('${item.id}')"><i class="fas fa-edit"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="deleteLocation('${item.id}')"><i class="fas fa-trash"></i></button>
+              </div>
+            </td>
+          </tr>
+        `);
+      });
+    }
+
+    // MODAL HANDLERS
+    window.openAddModal = function() {
+      editingId = null;
+      document.getElementById('addLocationForm').reset();
+      document.getElementById('modalTitle').textContent = 'Tambah Data Lokasi ProKlim Baru';
+      document.getElementById('addModal').style.display = 'flex';
+    };
+
+    window.closeAddModal = function() {
+      document.getElementById('addModal').style.display = 'none';
+    };
+
+    window.editLocation = function(id) {
+      const item = proklimDataList.find(d => d.id === id);
+      if (!item) return;
+
+      editingId = id;
+      document.getElementById('inputNamaKelompok').value = item.nama || '';
+      document.getElementById('inputKelembagaan').value = item.kelembagaan || '';
+      document.getElementById('inputAlamat').value = item.alamat || '';
+      document.getElementById('inputKecamatan').value = item.kecamatan || 'Sirimau';
+      document.getElementById('inputKategori').value = item.kategori || 'ProKlim Pratama';
+      document.getElementById('inputTahun').value = item.tahun || '2026';
+      document.getElementById('inputLat').value = item.lat || '';
+      document.getElementById('inputLong').value = item.long || '';
+      document.getElementById('inputAdaptasi').value = item.adaptasi || '';
+      document.getElementById('inputMitigasi').value = item.mitigasi || '';
+      document.getElementById('inputFotoDrive').value = item.foto || '';
+      document.getElementById('inputGdrivePublik').value = item.gdrivePublik || '';
+      document.getElementById('inputGdriveArsip').value = item.gdriveArsip || '';
+
+      document.getElementById('modalTitle').textContent = 'Edit Data Lokasi ProKlim';
+      document.getElementById('addModal').style.display = 'flex';
+    };
+
+    // SIMPAN DATA KE FIREBASE
+    window.saveLocation = function(event) {
+      event.preventDefault();
+
+      const locationObj = {
+        nama: document.getElementById('inputNamaKelompok').value,
+        kelembagaan: document.getElementById('inputKelembagaan').value,
+        alamat: document.getElementById('inputAlamat').value,
+        kecamatan: document.getElementById('inputKecamatan').value,
+        kategori: document.getElementById('inputKategori').value,
+        tahun: document.getElementById('inputTahun').value,
+        lat: document.getElementById('inputLat').value,
+        long: document.getElementById('inputLong').value,
+        adaptasi: document.getElementById('inputAdaptasi').value,
+        mitigasi: document.getElementById('inputMitigasi').value,
+        foto: convertDriveUrl(document.getElementById('inputFotoDrive').value),
+        gdrivePublik: document.getElementById('inputGdrivePublik').value,
+        gdriveArsip: document.getElementById('inputGdriveArsip').value
+      };
+
+      if (editingId) {
+        const itemRef = ref(db, `data_proklim/${editingId}`);
+        update(itemRef, locationObj)
+          .then(() => {
+            window.closeAddModal();
+            alert('Data berhasil diperbarui di Firebase!');
+          })
+          .catch((err) => alert('Gagal memperbarui: ' + err.message));
+      } else {
+        const newRef = push(ref(db, 'data_proklim'));
+        set(newRef, locationObj)
+          .then(() => {
+            window.closeAddModal();
+            alert('Data berhasil ditambahkan ke Firebase!');
+          })
+          .catch((err) => alert('Gagal menyimpan: ' + err.message));
+      }
+    };
+
+    // HAPUS DATA DARI FIREBASE
+    window.deleteLocation = function(id) {
+      if (confirm('Apakah Anda yakin ingin menghapus lokasi ini dari Firebase?')) {
+        const itemRef = ref(db, `data_proklim/${id}`);
+        remove(itemRef)
+          .then(() => alert('Data lokasi berhasil dihapus!'))
+          .catch((err) => alert('Gagal menghapus: ' + err.message));
+      }
+    };
+
+    // EXPORT DATA KE CSV
+    window.exportToCSV = function() {
+      if (proklimDataList.length === 0) {
+        alert('Tidak ada data untuk diunduh!');
+        return;
+      }
+
+      const headers = ["Nama Kelompok", "Jenis Kelembagaan", "Detail Lokasi", "Kecamatan", "Kategori", "Tahun", "Latitude", "Longitude", "Adaptasi", "Mitigasi", "GDrive Publik", "GDrive Arsip Admin"];
+      
+      let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+      csvContent += headers.join(";") + "\r\n";
+
+      proklimDataList.forEach(row => {
+        const rowData = [
+          `"${(row.nama || '').replace(/"/g, '""')}"`,
+          `"${(row.kelembagaan || '').replace(/"/g, '""')}"`,
+          `"${(row.alamat || '').replace(/"/g, '""')}"`,
+          `"${row.kecamatan || ''}"`,
+          `"${row.kategori || ''}"`,
+          `"${row.tahun || ''}"`,
+          `"${row.lat || ''}"`,
+          `"${row.long || ''}"`,
+          `"${(row.adaptasi || '').replace(/"/g, '""')}"`,
+          `"${(row.mitigasi || '').replace(/"/g, '""')}"`,
+          `"${row.gdrivePublik || ''}"`,
+          `"${row.gdriveArsip || ''}"`
+        ];
+        csvContent += rowData.join(";") + "\r\n";
+      });
+
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", `Data_SIMPROKLIM_Ambon_${new Date().toISOString().slice(0,10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+
+    // PETA WEBGIS LEAFLET
+    function initMap() {
+      if (!mapInitialized) {
+        map = L.map('map').setView([-3.6954, 128.1814], 12);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        markersGroup = L.layerGroup().addTo(map);
+        updateMapMarkers();
+        mapInitialized = true;
+      } else {
+        map.invalidateSize();
+      }
+    }
+
+    function updateMapMarkers() {
+      if (!map || !markersGroup) return;
+      markersGroup.clearLayers();
+
+      proklimDataList.forEach((item, index) => {
+        if (item.lat && item.long) {
+          let warnaMarker = '#22c55e'; // Pratama
+          let badgeColor = '#22c55e';
+
+          if (item.kategori === 'ProKlim Madya') { warnaMarker = '#eab308'; badgeColor = '#ca8a04'; }
+          else if (item.kategori === 'ProKlim Utama') { warnaMarker = '#ef4444'; badgeColor = '#dc2626'; }
+          else if (item.kategori === 'ProKlim Lestari') { warnaMarker = '#a855f7'; badgeColor = '#9333ea'; }
+
+          const customIcon = L.divIcon({
+            className: 'custom-proklim-pin',
+            html: `<div style="
+              background-color: ${warnaMarker};
+              width: 20px;
+              height: 20px;
+              border-radius: 50%;
+              border: 3px solid #ffffff;
+              box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+            "></div>`,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+          });
+
+          const adaptasiFormatted = formatKegiatanBerwarna(item.adaptasi, 'adaptasi');
+          const mitigasiFormatted = formatKegiatanBerwarna(item.mitigasi, 'mitigasi');
+          const kelembagaanFormatted = formatKelembagaanText(item.kelembagaan);
+
+          const popupContent = `
+            <div class="popup-card" id="popup-card-${index}">
+              <div class="popup-hero">
+                <img src="${item.foto}" onerror="this.src='https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=500&auto=format&fit=crop&q=60';">
+                <div class="popup-hero-overlay"></div>
+                <span class="popup-badge-kat" style="background-color: ${badgeColor};">${item.kategori}</span>
+                <div class="popup-header-info">
+                  <h4>${item.nama}</h4>
+                </div>
+              </div>
+
+              <div class="popup-body">
+                <div class="popup-meta-grid">
+                  <div class="popup-meta-item">
+                    <strong>Kecamatan</strong>
+                    ${item.kecamatan}
+                  </div>
+                  <div class="popup-meta-item">
+                    <strong>Tahun</strong>
+                    ${item.tahun || '-'}
+                  </div>
+                  <div class="popup-meta-item" style="grid-column: span 2;">
+                    <strong>Kelembagaan</strong>
+                    <div class="popup-text-multiline">${kelembagaanFormatted}</div>
+                  </div>
+                  <div class="popup-meta-item" style="grid-column: span 2;">
+                    <strong>Alamat / Detail Lokasi</strong>
+                    <div class="popup-text-multiline">${item.alamat || '-'}</div>
+                  </div>
+                </div>
+
+                <!-- ACCORDION TERSEMBUNYI: AKSI ADAPTASI -->
+                <div class="popup-accordion-item">
+                  <button class="popup-accordion-header adaptasi-btn" onclick="toggleAccordion('adaptasi-${index}')">
+                    <span><i class="fas fa-seedling"></i> Aksi Adaptasi Iklim</span>
+                    <i class="fas fa-chevron-down arrow-icon"></i>
+                  </button>
+                  <div id="adaptasi-${index}" class="popup-accordion-body adaptasi-bg">
+                    <div class="popup-kegiatan-list">
+                      ${adaptasiFormatted}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- ACCORDION TERSEMBUNYI: AKSI MITIGASI -->
+                <div class="popup-accordion-item">
+                  <button class="popup-accordion-header mitigasi-btn" onclick="toggleAccordion('mitigasi-${index}')">
+                    <span><i class="fas fa-solar-panel"></i> Aksi Mitigasi Iklim</span>
+                    <i class="fas fa-chevron-down arrow-icon"></i>
+                  </button>
+                  <div id="mitigasi-${index}" class="popup-accordion-body mitigasi-bg">
+                    <div class="popup-kegiatan-list">
+                      ${mitigasiFormatted}
+                    </div>
+                  </div>
+                </div>
+
+                ${item.gdrivePublik ? `
+                  <a href="${item.gdrivePublik}" target="_blank" class="popup-drive-btn">
+                    <i class="fab fa-google-drive"></i> Lihat Dokumentasi Foto / Berkas
+                  </a>
+                ` : ''}
+              </div>
+            </div>
+          `;
+
+          const marker = L.marker([parseFloat(item.lat), parseFloat(item.long)], { icon: customIcon })
+            .addTo(markersGroup)
+            .bindPopup(popupContent);
+
+          marker.on('popupopen', function(e) {
+            const popupNode = e.popup.getElement();
+            if (popupNode) {
+              L.DomEvent.disableScrollPropagation(popupNode);
+              L.DomEvent.disableClickPropagation(popupNode);
+            }
+          });
+        }
+      });
+    }
+
+    function updateStats() {
+      const kecSet = new Set(proklimDataList.map(d => d.kecamatan));
+
+      document.getElementById('stat-total').textContent = `${proklimDataList.length} Lokasi`;
+      document.getElementById('stat-kecamatan').textContent = `${kecSet.size} Kec.`;
+      document.getElementById('stat-pratama').textContent = `${proklimDataList.filter(d => d.kategori === 'ProKlim Pratama').length} Lokasi`;
+      document.getElementById('stat-madya').textContent = `${proklimDataList.filter(d => d.kategori === 'ProKlim Madya').length} Lokasi`;
+      document.getElementById('stat-utama').textContent = `${proklimDataList.filter(d => d.kategori === 'ProKlim Utama').length} Lokasi`;
+      document.getElementById('stat-lestari').textContent = `${proklimDataList.filter(d => d.kategori === 'ProKlim Lestari').length} Lokasi`;
+    }
+
+    // NAVIGASI TAB
+    window.switchTab = function(event, targetId) {
+      document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+      document.getElementById(targetId).classList.add('active');
+
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      event.currentTarget.parentElement.classList.add('active');
+
+      if (window.innerWidth <= 992) {
+        toggleSidebar();
+      }
+
+      if (targetId === 'detail-lokasi') {
+        setTimeout(initMap, 200);
+      }
+    };
+
+    window.filterTable = function() {
+      const filter = document.getElementById('searchInput').value.toLowerCase();
+      document.querySelectorAll('#tableBody tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
+      });
+    };
+
+    // UPDATE STATUS & DELETE PESAN FIREBASE
+    window.updateStatusPesan = function(id, statusBaru) {
+      const targetRef = ref(db, `pesan_saran/${id}`);
+      update(targetRef, { status: statusBaru })
+        .then(() => alert('Status pesan diperbarui!'))
+        .catch((err) => alert('Gagal update status: ' + err.message));
+    };
+
+    window.deletePesan = function(id) {
+      if (confirm('Apakah Anda yakin ingin menghapus pesan ini?')) {
+        const targetRef = ref(db, `pesan_saran/${id}`);
+        remove(targetRef)
+          .then(() => alert('Pesan berhasil dihapus!'))
+          .catch((err) => alert('Gagal menghapus: ' + err.message));
+      }
+    };
+
+    // INIT MAP SAAT DIMUAT
+    document.addEventListener("DOMContentLoaded", function() {
+      initMap();
+    });
+  </script>
+
+</body>
+</html>

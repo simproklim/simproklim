@@ -1,0 +1,2008 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIMPROKLIM Kota Ambon - Akses Publik</title>
+
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <!-- Chart.js Library untuk Grafik Statistik -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    html, body {
+      height: 100vh;
+      height: 100dvh;
+      overflow: hidden;
+      background-color: #f8fafc;
+      color: #1e293b;
+    }
+
+    body {
+      display: flex;
+    }
+
+    /* OVERLAY BACKGROUND MOBILE */
+    .mobile-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 998;
+      transition: all 0.3s ease;
+    }
+
+    .mobile-overlay.active {
+      display: block;
+    }
+
+    /* SIDEBAR KIRI */
+    aside {
+      width: 260px;
+      background-color: #1e293b;
+      color: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 18px 16px;
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
+      flex-shrink: 0;
+      height: 100vh;
+      height: 100dvh;
+      overflow-y: auto;
+      box-shadow: 4px 0 14px rgba(0, 0, 0, 0.06);
+      z-index: 999;
+      transition: all 0.3s ease;
+    }
+
+    /* BRAND SECTION HORIZONTAL */
+    .brand-section {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      text-align: left;
+      gap: 12px;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .brand-logo-wrapper {
+      width: 42px;
+      height: 42px;
+      background-color: #ffffff;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 5px;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+      flex-shrink: 0;
+    }
+
+    .brand-logo {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .brand-text h1 {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      line-height: 1.1;
+      color: #ffffff;
+    }
+
+    .brand-text span {
+      font-size: 10.5px;
+      color: #38bdf8;
+      font-weight: 600;
+    }
+
+    .nav-menu {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      color: #cbd5e1;
+      text-decoration: none;
+      font-size: 12.5px;
+      font-weight: 600;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .nav-item:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+    }
+
+    .nav-item.active {
+      background-color: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    /* WIDGET LEGENDA KATEGORI SIDEBAR */
+    .sidebar-widget {
+      margin-top: 14px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+    }
+
+    .widget-title {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .legend-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11.5px;
+      color: #cbd5e1;
+      font-weight: 500;
+      padding: 6px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .legend-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+    }
+
+    .legend-item.active {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      font-weight: 700;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .dot.pratama { background-color: #34d399; }
+    .dot.madya { background-color: #fbbf24; }
+    .dot.utama { background-color: #f87171; }
+    .dot.lestari { background-color: #c084fc; }
+
+    .dlhp-badge {
+      margin-top: 10px;
+      padding-top: 8px;
+      border-top: 1px dashed rgba(255, 255, 255, 0.15);
+      font-size: 10.5px;
+      color: #94a3b8;
+      line-height: 1.35;
+    }
+
+    .dlhp-badge strong {
+      color: #38bdf8;
+    }
+
+    .btn-portal {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px;
+      border-radius: 10px;
+      background-color: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #e2e8f0;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 600;
+      transition: 0.2s;
+      flex-shrink: 0;
+      margin-top: 16px;
+    }
+
+    .btn-portal:hover {
+      background-color: rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+    }
+
+    /* KONTEN UTAMA */
+    main {
+      flex-grow: 1;
+      padding: 20px 28px;
+      height: 100vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .content-section {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    .content-section.active {
+      display: flex;
+    }
+
+    /* TOP BAR MOBILE */
+    .mobile-topbar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      background: #ffffff;
+      padding: 10px 16px;
+      border-bottom: 1px solid #e2e8f0;
+      margin: -20px -28px 16px -28px;
+      position: sticky;
+      top: -20px;
+      z-index: 10;
+    }
+
+    .mobile-menu-btn {
+      background: #f1f5f9;
+      border: none;
+      font-size: 18px;
+      color: #0f172a;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .mobile-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .header-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-shrink: 0;
+    }
+
+    .animated-title {
+      font-size: 22px;
+      font-weight: 800;
+      background: linear-gradient(90deg, #0f172a 0%, #2563eb 50%, #0f172a 100%);
+      background-size: 200% auto;
+      color: transparent;
+      -webkit-background-clip: text;
+      background-clip: text;
+      animation: slideInText 0.8s ease-out forwards, shimmerText 4s linear infinite;
+    }
+
+    @keyframes slideInText {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes shimmerText {
+      0% { background-position: 0% center; }
+      100% { background-position: 200% center; }
+    }
+
+    .header-section p {
+      font-size: 13px;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    /* GRID STATISTIK DESKTOP */
+    .stats-grid-4 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 14px;
+      flex-shrink: 0;
+    }
+
+    .stats-grid-kategori {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 16px;
+      flex-shrink: 0;
+    }
+
+    .stat-card {
+      padding: 16px 20px;
+      border-radius: 14px;
+      color: #ffffff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    }
+
+    /* TOOLTIP PADA KARTU KATEGORI (POSISI DI ATAS AGAR TIDAK TERPOTONG) */
+    .has-tooltip {
+      cursor: pointer;
+    }
+
+    .has-tooltip::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-bottom: 8px;
+      background: #0f172a;
+      color: #ffffff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      white-space: normal;
+      width: 200px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+      z-index: 100;
+      pointer-events: none;
+      line-height: 1.3;
+    }
+
+    .has-tooltip:hover::after {
+      opacity: 1;
+      visibility: visible;
+      margin-bottom: 12px;
+    }
+
+    .stat-card.top-total-titik {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      border-bottom: 4px solid #10b981;
+    }
+
+    .stat-card.top-total-kecamatan {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+      border-bottom: 4px solid #6366f1;
+    }
+
+    .stat-card.top-tahun-pemutakhiran {
+      background: linear-gradient(135deg, #064e3b 0%, #047857 100%);
+      border-bottom: 4px solid #34d399;
+    }
+
+    .stat-card.kat-pratama { background: linear-gradient(135deg, #34d399 0%, #059669 100%); }
+    .stat-card.kat-madya { background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); }
+    .stat-card.kat-utama { background: linear-gradient(135deg, #f87171 0%, #dc2626 100%); }
+    .stat-card.kat-lestari { background: linear-gradient(135deg, #c084fc 0%, #9333ea 100%); }
+
+    .stat-info p {
+      font-size: 12px;
+      opacity: 0.95;
+      font-weight: 600;
+    }
+
+    .stat-info h3 {
+      font-size: 26px;
+      font-weight: 800;
+      margin-top: 3px;
+      line-height: 1;
+    }
+
+    .stat-icon {
+      font-size: 24px;
+      opacity: 0.9;
+      background: rgba(255, 255, 255, 0.2);
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+    }
+
+    /* STYLING KONTEN EDUKASI PROKLIM */
+    .edukasi-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      padding-bottom: 24px;
+    }
+
+    .edukasi-card {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 22px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    }
+
+    .edukasi-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .edukasi-card-header i {
+      font-size: 20px;
+      color: #2563eb;
+      background: #eff6ff;
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .edukasi-card-header h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .edukasi-card p {
+      font-size: 13.5px;
+      color: #475569;
+      line-height: 1.6;
+      margin-bottom: 10px;
+    }
+
+    .edukasi-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .edukasi-list li {
+      font-size: 13px;
+      color: #334155;
+      line-height: 1.5;
+      padding-left: 20px;
+      position: relative;
+    }
+
+    .edukasi-list li::before {
+      content: "•";
+      color: #2563eb;
+      font-weight: bold;
+      font-size: 18px;
+      position: absolute;
+      left: 4px;
+      top: -2px;
+    }
+
+    .kategori-edukasi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .kat-item-box {
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 12.5px;
+      line-height: 1.45;
+    }
+
+    .kat-item-box.pratama { background-color: #ecfdf5; border-left: 4px solid #059669; color: #064e3b; }
+    .kat-item-box.madya { background-color: #fffbeb; border-left: 4px solid #d97706; color: #78350f; }
+    .kat-item-box.utama { background-color: #fef2f2; border-left: 4px solid #dc2626; color: #7f1d1d; }
+    .kat-item-box.lestari { background-color: #faf5ff; border-left: 4px solid #9333ea; color: #581c87; }
+
+    /* CHART CARD CONTAINER */
+    .chart-container-card {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 18px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 320px;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .chart-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chart-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .filter-select {
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      font-size: 12px;
+      font-weight: 600;
+      outline: none;
+      color: #334155;
+      background: #fff;
+    }
+
+    .chart-wrapper {
+      position: relative;
+      flex-grow: 1;
+      width: 100%;
+      min-height: 250px;
+    }
+
+    /* MAP CONTAINER CARD */
+    .map-container-card {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 16px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 440px;
+    }
+
+    .map-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .map-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .map-title i {
+      color: #10b981;
+    }
+
+    .map-tools {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .search-box {
+      display: flex;
+      gap: 6px;
+    }
+
+    .search-box input {
+      padding: 7px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 12px;
+      width: 230px;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    .search-box input:focus {
+      border-color: #2563eb;
+    }
+
+    .search-box button {
+      background-color: #10b981;
+      color: #fff;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .search-box button:hover {
+      background-color: #059669;
+    }
+
+    .btn-map-control {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      padding: 7px 11px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #334155;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-map-control:hover {
+      background: #e2e8f0;
+    }
+
+    #publicMap {
+      width: 100%;
+      flex-grow: 1;
+      border-radius: 10px;
+      z-index: 1;
+      min-height: 400px;
+    }
+
+    /* WIDGET KATEGORI BOTTOM MAP */
+    .map-bottom-categories {
+      margin-top: 12px;
+      padding: 12px 14px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .category-filter-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .category-filter-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #475569;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .category-pills-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .cat-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+
+    .cat-pill:hover {
+      border-color: #94a3b8;
+      transform: translateY(-1px);
+    }
+
+    .cat-pill.active {
+      border-color: transparent;
+      color: #ffffff !important;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+    }
+
+    .cat-pill.active.all { background-color: #0f172a; }
+    .cat-pill.active.pratama { background-color: #059669; }
+    .cat-pill.active.madya { background-color: #d97706; }
+    .cat-pill.active.utama { background-color: #dc2626; }
+    .cat-pill.active.lestari { background-color: #9333ea; }
+
+    /* POPUP STYLING LEAFLET */
+    .leaflet-popup-content-wrapper {
+      border-radius: 16px !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, 0.22) !important;
+      border: 1px solid #e2e8f0;
+    }
+
+    .leaflet-popup-content {
+      margin: 0 !important;
+      width: 290px !important;
+      line-height: 1.4 !important;
+      max-height: 420px;
+      overflow-y: auto;
+    }
+
+    .popup-card {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #ffffff;
+    }
+
+    .popup-hero {
+      position: relative;
+      height: 110px;
+      background: #0f172a;
+    }
+
+    .popup-hero img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .popup-hero-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(15,23,42,0.85) 100%);
+    }
+
+    .popup-badge-kat {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 800;
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .popup-header-info {
+      position: absolute;
+      bottom: 8px;
+      left: 12px;
+      right: 12px;
+      color: #ffffff;
+    }
+
+    .popup-header-info h4 {
+      font-size: 14px;
+      font-weight: 800;
+      color: #ffffff;
+      margin: 0;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+      line-height: 1.2;
+    }
+
+    .popup-body {
+      padding: 12px 14px 14px 14px;
+    }
+
+    .popup-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: #f8fafc;
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 10px;
+      font-size: 11px;
+    }
+
+    .popup-meta-item {
+      color: #475569;
+    }
+
+    .popup-meta-item strong {
+      color: #0f172a;
+      display: block;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 2px;
+    }
+
+    .popup-text-multiline {
+      white-space: pre-line;
+      line-height: 1.45;
+    }
+
+    .popup-accordion-item {
+      border-radius: 10px;
+      margin-bottom: 8px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      transition: all 0.2s ease;
+    }
+
+    .popup-accordion-header {
+      width: 100%;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: none;
+      background: #f8fafc;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.2s ease;
+    }
+
+    .popup-accordion-header.adaptasi-btn {
+      color: #15803d;
+      background-color: #f0fdf4;
+      border-bottom: 1px solid #bbf7d0;
+    }
+
+    .popup-accordion-header.mitigasi-btn {
+      color: #0369a1;
+      background-color: #f0f9ff;
+      border-bottom: 1px solid #bae6fd;
+    }
+
+    .popup-accordion-header .arrow-icon {
+      font-size: 10px;
+      transition: transform 0.3s ease;
+    }
+
+    .popup-accordion-body {
+      display: none;
+      padding: 8px;
+    }
+
+    .popup-accordion-body.adaptasi-bg { background-color: #f0fdf4; }
+    .popup-accordion-body.mitigasi-bg { background-color: #f0f9ff; }
+
+    .popup-accordion-body.show {
+      display: block;
+      animation: expandDown 0.25s ease-out;
+    }
+
+    @keyframes expandDown {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .popup-kegiatan-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .popup-kegiatan-tag {
+      font-size: 10.5px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      background: #ffffff;
+      font-weight: 600;
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .popup-accordion-body.adaptasi-bg .popup-kegiatan-tag {
+      color: #166534;
+      border: 1px solid #dcfce7;
+    }
+
+    .popup-accordion-body.mitigasi-bg .popup-kegiatan-tag {
+      color: #075985;
+      border: 1px solid #e0f2fe;
+    }
+
+    .popup-drive-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: #ffffff !important;
+      text-decoration: none;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 8px;
+      box-shadow: 0 3px 8px rgba(2, 132, 199, 0.25);
+      transition: all 0.2s;
+    }
+
+    .popup-drive-btn:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+    }
+
+    /* MODAL SARAN */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+    }
+
+    .modal-box {
+      background: #ffffff;
+      width: 100%;
+      max-width: 480px;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .close-btn {
+      background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer;
+    }
+
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; color: #334155; margin-bottom: 6px; }
+    .form-group input, .form-group textarea {
+      width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; outline: none;
+    }
+
+    .btn-submit-saran {
+      width: 100%; background: #2563eb; color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-submit-saran:hover {
+      background: #1d4ed8;
+    }
+
+    /* RESPONSIVE BREAKPOINTS */
+    @media (max-width: 768px) {
+      body { flex-direction: column; overflow: auto; }
+      aside {
+        position: fixed; 
+        top: 0; 
+        left: -270px; 
+        height: 100vh;
+        height: 100dvh;
+        padding-bottom: calc(30px + env(safe-area-inset-bottom));
+        z-index: 999;
+      }
+      aside.active { left: 0; }
+      .mobile-topbar { display: flex; margin: -16px -16px 16px -16px; }
+      main { padding: 16px; height: auto; min-height: 100vh; min-height: 100dvh; overflow-y: visible; }
+      .header-section { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .animated-title { font-size: 18px; }
+      
+      .stats-grid-4, .stats-grid-kategori { 
+        grid-template-columns: repeat(2, 1fr); 
+        gap: 10px; 
+      }
+
+      .stats-grid-4 .stat-card.top-tahun-pemutakhiran {
+        grid-column: span 2;
+      }
+
+      .stat-card { 
+        padding: 12px 14px; 
+        gap: 8px;
+      }
+      .stat-info p { 
+        font-size: 11px; 
+        line-height: 1.2; 
+      }
+      .stat-info h3 { 
+        font-size: 20px; 
+        margin-top: 4px; 
+      }
+      .stat-icon { 
+        width: 38px; 
+        height: 38px; 
+        font-size: 18px; 
+        border-radius: 10px; 
+        flex-shrink: 0; 
+      }
+
+      .map-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+      .map-tools { width: 100%; flex-wrap: wrap; }
+      .search-box { width: 100%; }
+      .search-box input { flex-grow: 1; width: auto; }
+      #publicMap { min-height: 350px; }
+
+      .category-pills-container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+      }
+      .cat-pill {
+        justify-content: center;
+        padding: 8px 10px;
+        font-size: 11px;
+      }
+      .cat-pill.all-pill {
+        grid-column: span 2;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- MOBILE OVERLAY BACKDROP -->
+  <div class="mobile-overlay" id="mobileOverlay" onclick="toggleSidebar()"></div>
+
+  <!-- SIDEBAR KIRI -->
+  <aside id="sidebar">
+    <div>
+      <div class="brand-section">
+        <div class="brand-logo-wrapper">
+          <img src="logo.png" alt="Logo SIMPROKLIM" class="brand-logo" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2913/2913520.png'">
+        </div>
+        <div class="brand-text">
+          <h1>SIMPROKLIM</h1>
+          <span>Kota Ambon</span>
+        </div>
+      </div>
+
+      <!-- NAVIGATION MENU -->
+      <nav class="nav-menu">
+        <a id="nav-dashboard" class="nav-item active" onclick="switchNav('dashboard')">
+          <i class="fa-solid fa-chart-pie"></i> Dashboard Statistik
+        </a>
+        <a id="nav-peta" class="nav-item" onclick="switchNav('peta')">
+          <i class="fa-solid fa-map-location-dot"></i> Peta WebGIS ProKlim
+        </a>
+        <!-- MENU EDUKASI PROKLIM -->
+        <a id="nav-edukasi" class="nav-item" onclick="switchNav('edukasi')">
+          <i class="fa-solid fa-book-open"></i> Edukasi ProKlim
+        </a>
+        <a href="javascript:void(0)" class="nav-item" onclick="openSaranModal()">
+          <i class="fa-solid fa-comment-dots"></i> Saran & Masukan
+        </a>
+      </nav>
+
+      <div class="sidebar-widget">
+        <div class="widget-title">
+          <span><i class="fa-solid fa-layer-group"></i> Kategori ProKlim</span>
+          <i class="fa-solid fa-filter" style="font-size: 9px; opacity: 0.7;"></i>
+        </div>
+        <div class="legend-list">
+          <div class="legend-item" id="side-cat-all" onclick="filterMapCategory('ALL')">
+            <span class="dot" style="background-color: #64748b;"></span> Semua Kategori
+          </div>
+          <div class="legend-item" id="side-cat-pratama" onclick="filterMapCategory('ProKlim Pratama')">
+            <span class="dot pratama"></span> ProKlim Pratama
+          </div>
+          <div class="legend-item" id="side-cat-madya" onclick="filterMapCategory('ProKlim Madya')">
+            <span class="dot madya"></span> ProKlim Madya
+          </div>
+          <div class="legend-item" id="side-cat-utama" onclick="filterMapCategory('ProKlim Utama')">
+            <span class="dot utama"></span> ProKlim Utama
+          </div>
+          <div class="legend-item" id="side-cat-lestari" onclick="filterMapCategory('ProKlim Lestari')">
+            <span class="dot lestari"></span> ProKlim Lestari
+          </div>
+        </div>
+
+        <div class="dlhp-badge">
+          Dikelola oleh:<br>
+          <strong>Dinas Lingkungan Hidup & Persampahan Kota Ambon</strong>
+        </div>
+      </div>
+    </div>
+
+    <a href="index.html" class="btn-portal">
+      <i class="fa-solid fa-arrow-left"></i> Kembali ke Portal
+    </a>
+  </aside>
+
+  <!-- KONTEN UTAMA -->
+  <main>
+    <!-- TOPBAR MOBILE -->
+    <div class="mobile-topbar">
+      <button class="mobile-menu-btn" onclick="toggleSidebar()">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <span class="mobile-title">SIMPROKLIM KOTA AMBON</span>
+      <div style="width: 32px;"></div>
+    </div>
+
+    <div class="header-section">
+      <div>
+        <h2 class="animated-title" id="pageTitle">Selamat Datang di SIMPROKLIM</h2>
+        <p id="pageSubTitle">Sistem Informasi dan Pemetaan Program Kampung Iklim Kota Ambon</p>
+      </div>
+    </div>
+
+    <!-- 1. DASHBOARD STATISTIK SECTION -->
+    <div id="section-dashboard" class="content-section active">
+      <!-- INFO RINGKASAN UTAMA -->
+      <div class="stats-grid-4">
+        <div class="stat-card top-total-titik">
+          <div class="stat-info">
+            <p>Total Titik ProKlim</p>
+            <h3 id="statTotalTitik">0</h3>
+          </div>
+          <div class="stat-icon"><i class="fa-solid fa-location-dot"></i></div>
+        </div>
+
+        <div class="stat-card top-total-kecamatan">
+          <div class="stat-info">
+            <p>Jumlah Kecamatan</p>
+            <h3 id="statTotalKecamatan">0</h3>
+          </div>
+          <div class="stat-icon"><i class="fa-solid fa-city"></i></div>
+        </div>
+
+        <div class="stat-card top-tahun-pemutakhiran">
+          <div class="stat-info">
+            <p>Tahun Pemutakhiran</p>
+            <h3 id="statTahunAktif">2026</h3>
+          </div>
+          <div class="stat-icon"><i class="fa-solid fa-calendar-check"></i></div>
+        </div>
+      </div>
+
+      <!-- KATEGORI PROKLIM GRID -->
+      <div class="stats-grid-kategori">
+        <div class="stat-card kat-pratama has-tooltip" data-tooltip="Pratama: Tahap awal pembentukan dan dimulainya aksi lingkungan.">
+          <div class="stat-info">
+            <p>ProKlim Pratama</p>
+            <h3 id="statPratama">0</h3>
+          </div>
+          <div class="stat-icon"><i class="fa-solid fa-seedling"></i></div>
+        </div>
+
+        <div class="stat-card kat-madya has-tooltip" data-tooltip="Madya: Aksi lingkungan terstruktur dan konsisten dijalankan masyarakat.">
+          <div class="stat-info">
+            <p>ProKlim Madya</p>
+            <h3 id="statMadya">0</h3>
+          </div>
+          <div class="stat-icon"><i class="fa-solid fa-leaf"></i></div>
+        </div>
+
+        <div class="stat-card kat-utama has-tooltip" data-tooltip="Utama: Aksi lingkungan sudah matang, mandiri, dan berdampak luas.">
+          <div class="stat-info">
+            <p>ProKlim Utama</p>
+            <h3 id="statUtama">0</h3>
+          </div>
+          <div class="stat-icon"><i class="fa-solid fa-tree"></i></div>
+        </div>
+
+        <div class="stat-card kat-lestari has-tooltip" data-tooltip="Lestari: Tingkat tertinggi, membina & menginspirasi wilayah lain.">
+          <div class="stat-info">
+            <p>ProKlim Lestari</p>
+            <h3 id="statLestari">0</h3>
+          </div>
+          <div class="stat-icon"><i class="fa-solid fa-award"></i></div>
+        </div>
+      </div>
+
+      <!-- GRAFIK PER KECAMATAN -->
+      <div class="chart-container-card">
+        <div class="chart-header">
+          <div class="chart-title">
+            <i class="fa-solid fa-chart-column" style="color: #2563eb;"></i> Grafik Banyaknya Lokasi ProKlim per Kecamatan
+          </div>
+          <div class="chart-controls">
+            <select id="filterTahun" class="filter-select" onchange="applyTahunFilter()">
+              <option value="ALL">Semua Tahun</option>
+            </select>
+          </div>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="kecamatanChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. PETA WEBGIS PROKLIM SECTION -->
+    <div id="section-peta" class="content-section">
+      <div class="map-container-card">
+        <div class="map-header">
+          <div class="map-title">
+            <i class="fa-solid fa-map-location-dot"></i> Peta Persebaran ProKlim Kota Ambon
+          </div>
+          <div class="map-tools">
+            <div class="search-box">
+              <input type="text" id="searchInput" placeholder="Cari lokasi / kampung..." onkeyup="handleSearchKey(event)">
+              <button onclick="searchLocation()">Cari</button>
+            </div>
+            <button class="btn-map-control" onclick="resetMapView()" title="Reset Tampilan Peta">
+              <i class="fa-solid fa-rotate-right"></i> Reset
+            </button>
+          </div>
+        </div>
+
+        <!-- AREA MAP LEAFLET -->
+        <div id="publicMap"></div>
+
+        <!-- WIDGET FILTER KATEGORI DI BAWAH PETA -->
+        <div class="map-bottom-categories">
+          <div class="category-filter-header">
+            <span class="category-filter-title">
+              <i class="fa-solid fa-filter" style="color: #2563eb;"></i> Filter Kategori Lokasi di Peta:
+            </span>
+          </div>
+          <div class="category-pills-container">
+            <div class="cat-pill all-pill active all" id="bottom-cat-all" onclick="filterMapCategory('ALL')">
+              <span class="dot" style="background-color: #64748b;"></span> Semua Tipe
+            </div>
+            <div class="cat-pill" id="bottom-cat-pratama" onclick="filterMapCategory('ProKlim Pratama')">
+              <span class="dot pratama"></span> Pratama
+            </div>
+            <div class="cat-pill" id="bottom-cat-madya" onclick="filterMapCategory('ProKlim Madya')">
+              <span class="dot madya"></span> Madya
+            </div>
+            <div class="cat-pill" id="bottom-cat-utama" onclick="filterMapCategory('ProKlim Utama')">
+              <span class="dot utama"></span> Utama
+            </div>
+            <div class="cat-pill" id="bottom-cat-lestari" onclick="filterMapCategory('ProKlim Lestari')">
+              <span class="dot lestari"></span> Lestari
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 3. EDUKASI PROKLIM SECTION -->
+    <div id="section-edukasi" class="content-section">
+      <div class="edukasi-grid">
+        
+        <!-- CARD 1 -->
+        <div class="edukasi-card">
+          <div class="edukasi-card-header">
+            <i class="fa-solid fa-circle-info"></i>
+            <h3>1. Apa itu ProKlim?</h3>
+          </div>
+          <p>ProKlim (Program Kampung Iklim) adalah program nasional dari Kementerian Lingkungan Hidup dan Kehutanan (KLHK) yang mendorong masyarakat di tingkat lokal (seperti RT, RW, atau desa/kelurahan) untuk aktif melakukan aksi nyata dalam menghadapi perubahan iklim.</p>
+          <p>Melalui aplikasi SIMPROKLIM Kota Ambon, kita dapat memetakan dan memantau sebaran serta pencapaian lokasi ProKlim yang ada di 5 kecamatan.</p>
+        </div>
+
+        <!-- CARD 2 -->
+        <div class="edukasi-card">
+          <div class="edukasi-card-header">
+            <i class="fa-solid fa-earth-americas"></i>
+            <h3>2. Mengapa ProKlim Penting bagi Kita?</h3>
+          </div>
+          <p>Perubahan iklim menyebabkan cuaca makin tidak menentu, bencana alam meningkat, dan krisis air/pangan. ProKlim hadir untuk membantu masyarakat melalui:</p>
+          <ul class="edukasi-list">
+            <li><strong>Adaptasi:</strong> Bertahan dan siap menghadapi dampak perubahan iklim (misal: cegah banjir, longsor, kekeringan).</li>
+            <li><strong>Mitigasi:</strong> Kurangi emisi gas rumah kaca penyebab pemanasan global (misal: kurangi sampah, hemat energi, tanam pohon).</li>
+          </ul>
+        </div>
+
+        <!-- CARD 3 -->
+        <div class="edukasi-card">
+          <div class="edukasi-card-header">
+            <i class="fa-solid fa-hands-holding-circle"></i>
+            <h3>3. Apa Saja Kegiatan Nyata dalam ProKlim?</h3>
+          </div>
+          <p>Masyarakat bisa berkontribusi lewat tindakan sederhana sehari-hari:</p>
+          <ul class="edukasi-list">
+            <li><strong>Pengelolaan Sampah & Limbah:</strong> Pemilahan sampah, pembuatan kompos, bank sampah, dan daur ulang.</li>
+            <li><strong>Penghijauan & Pangan:</strong> Penanaman pohon/penebaran bibit, pembuatan apotek hidup, dan budidaya tanaman pangan lokal.</li>
+            <li><strong>Konservasi Air & Energi:</strong> Pembuatan lubang biopori, penampungan air hujan, pemanfaatan energi ramah lingkungan, serta hemat listrik.</li>
+            <li><strong>Tanggap Bencana:</strong> Gotong royong membersihkan saluran air dan membentuk regu kesiapsiagaan bencana.</li>
+          </ul>
+        </div>
+
+        <!-- CARD 4 -->
+        <div class="edukasi-card">
+          <div class="edukasi-card-header">
+            <i class="fa-solid fa-award"></i>
+            <h3>4. Kategori / Tingkatan ProKlim</h3>
+          </div>
+          <p>Apresiasi lokasi ProKlim terbagi menjadi 4 tingkatan utama berdasarkan keaktifan dan keberlanjutan aksi masyarakat:</p>
+          <div class="kategori-edukasi-grid">
+            <div class="kat-item-box pratama">
+              <strong>1. Pratama:</strong><br>
+              Tahap awal pembentukan dan dimulainya aksi lingkungan.
+            </div>
+            <div class="kat-item-box madya">
+              <strong>2. Madya:</strong><br>
+              Aksi lingkungan mulai terstruktur dan konsisten dijalankan masyarakat.
+            </div>
+            <div class="kat-item-box utama">
+              <strong>3. Utama:</strong><br>
+              Aksi lingkungan sudah berjalan matang, mandiri, dan berdampak luas.
+            </div>
+            <div class="kat-item-box lestari">
+              <strong>4. Lestari:</strong><br>
+              Tingkat tertinggi, di mana lokasi tersebut sudah mampu membina dan menginspirasi wilayah lain di sekitarnya.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL SARAN -->
+  <div class="modal-overlay" id="saranModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 style="font-size: 16px; color:#0f172a;"><i class="fa-solid fa-paper-plane" style="color:#2563eb;"></i> Kirim Saran & Masukan</h3>
+        <button class="close-btn" onclick="closeSaranModal()">&times;</button>
+      </div>
+      <form id="saranForm" onsubmit="kirimSaran(event)">
+        <div class="form-group">
+          <label>Nama Pengirim</label>
+          <input type="text" id="saranNama" placeholder="Nama Anda..." required>
+        </div>
+        <div class="form-group">
+          <label>Email / Kontak</label>
+          <input type="text" id="saranKontak" placeholder="Kontak / No HP..." required>
+        </div>
+        <div class="form-group">
+          <label>Isi Pesan / Masukan</label>
+          <textarea id="saranPesan" rows="4" placeholder="Tuliskan masukan untuk SIMPROKLIM..." required></textarea>
+        </div>
+        <button type="submit" class="btn-submit-saran">Kirim Pesan</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- LEAFLET JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- FIREBASE REALTIME DATABASE & LOGIC SCRIPT -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, onValue, push, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    // Konfigurasi Firebase SIMPROKLIM Ambon
+    const firebaseConfig = {
+      apiKey: "AIzaSyA2wICAjpo6cGlEPLSCU0tmAdlwqaFHvho",
+      authDomain: "simproklim-ambon.firebaseapp.com",
+      databaseURL: "https://simproklim-ambon-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "simproklim-ambon",
+      storageBucket: "simproklim-ambon.firebasestorage.app",
+      messagingSenderId: "185945532311",
+      appId: "1:185945532311:web:213b8511e2b4a6561986d2"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    let map;
+    let markersGroup;
+    let allMarkersMap = {};
+    let mapInitialized = false;
+    let myChart = null;
+    let cachedProklimData = [];
+    let currentCategoryFilter = 'ALL';
+    const AMBON_CENTER = [-3.6954, 128.1814];
+    const AMBON_ZOOM = 12;
+
+    // BINDING FUNGSI GLOBAL KE WINDOW UNTUK EVENT HANDLER HTML
+    window.toggleSidebar = function() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('mobileOverlay');
+      if (sidebar && overlay) {
+        sidebar.classList.toggle('active');
+        overlay.classList.toggle('active');
+      }
+    };
+
+    window.switchNav = function(targetNav) {
+      document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+      document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+
+      const titleEl = document.getElementById('pageTitle');
+      const subTitleEl = document.getElementById('pageSubTitle');
+
+      if (targetNav === 'dashboard') {
+        document.getElementById('nav-dashboard').classList.add('active');
+        document.getElementById('section-dashboard').classList.add('active');
+        titleEl.textContent = "Selamat Datang di SIMPROKLIM";
+        subTitleEl.textContent = "Sistem Informasi dan Pemetaan Program Kampung Iklim Kota Ambon";
+      } else if (targetNav === 'peta') {
+        document.getElementById('nav-peta').classList.add('active');
+        document.getElementById('section-peta').classList.add('active');
+        titleEl.textContent = "Peta WebGIS ProKlim";
+        subTitleEl.textContent = "Persebaran Lokasi Program Kampung Iklim di Kota Ambon";
+        
+        if (!mapInitialized) {
+          initMap();
+        }
+        setTimeout(() => {
+          if (map) map.invalidateSize();
+        }, 200);
+      } else if (targetNav === 'edukasi') {
+        document.getElementById('nav-edukasi').classList.add('active');
+        document.getElementById('section-edukasi').classList.add('active');
+        titleEl.textContent = "Edukasi & Informasi ProKlim";
+        subTitleEl.textContent = "Panduan lengkap seputar Program Kampung Iklim Kota Ambon";
+      }
+
+      // Tutup sidebar mobile jika sedang terbuka
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar && sidebar.classList.contains('active')) {
+        window.toggleSidebar();
+      }
+    };
+
+    window.filterMapCategory = function(category) {
+      const sectionPeta = document.getElementById('section-peta');
+      if (!sectionPeta.classList.contains('active')) {
+        window.switchNav('peta');
+      }
+
+      currentCategoryFilter = category;
+      updateFilterUI(category);
+
+      let filteredData = cachedProklimData;
+      
+      const selectedYear = document.getElementById('filterTahun').value;
+      if (selectedYear !== 'ALL') {
+        filteredData = filteredData.filter(item => String(item.tahun) === String(selectedYear));
+      }
+
+      if (category !== 'ALL') {
+        filteredData = filteredData.filter(item => item.kategori === category);
+      }
+
+      renderMapData(filteredData);
+
+      // Pengecekan agar map.fitBounds hanya berjalan jika peta sudah siap
+      if (map && markersGroup && markersGroup.getLayers().length > 0) {
+        const group = L.featureGroup(markersGroup.getLayers());
+        map.fitBounds(group.getBounds().pad(0.15));
+      } else if (map && category === 'ALL') {
+        window.resetMapView();
+      }
+    };
+
+    window.applyTahunFilter = function() {
+      const selectedYear = document.getElementById('filterTahun').value;
+      let filteredData = cachedProklimData;
+
+      if (selectedYear !== 'ALL') {
+        filteredData = cachedProklimData.filter(item => String(item.tahun) === String(selectedYear));
+        document.getElementById('statTahunAktif').textContent = selectedYear;
+      } else {
+        document.getElementById('statTahunAktif').textContent = '2026';
+      }
+
+      updateDashboard(filteredData, false);
+      
+      if (mapInitialized) {
+        if (currentCategoryFilter !== 'ALL') {
+          filteredData = filteredData.filter(item => item.kategori === currentCategoryFilter);
+        }
+        renderMapData(filteredData);
+      }
+    };
+
+    window.resetMapView = function() {
+      if (!map) return;
+      currentCategoryFilter = 'ALL';
+      updateFilterUI('ALL');
+      
+      const selectedYear = document.getElementById('filterTahun').value;
+      let dataToRender = cachedProklimData;
+      if (selectedYear !== 'ALL') {
+        dataToRender = cachedProklimData.filter(item => String(item.tahun) === String(selectedYear));
+      }
+      
+      renderMapData(dataToRender);
+      map.setView(AMBON_CENTER, AMBON_ZOOM);
+    };
+
+    window.handleSearchKey = function(e) {
+      if (e.key === 'Enter') {
+        window.searchLocation();
+      }
+    };
+
+    window.searchLocation = function() {
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      if (!query) return;
+
+      let found = false;
+      for (let key in allMarkersMap) {
+        if (key.includes(query)) {
+          const target = allMarkersMap[key];
+          if (map) {
+            map.setView([parseFloat(target.lat), parseFloat(target.long)], 16);
+            target.marker.openPopup();
+          }
+          found = true;
+          break;
+        }
+      }
+
+      if (!found) {
+        alert('Lokasi ProKlim tidak ditemukan!');
+      }
+    };
+
+    window.toggleAccordion = function(id) {
+      const content = document.getElementById(id);
+      if (!content) return;
+      const header = content.previousElementSibling;
+      const arrow = header ? header.querySelector('.arrow-icon') : null;
+      
+      if (content.classList.contains('show')) {
+        content.classList.remove('show');
+        if (arrow) arrow.style.transform = 'rotate(0deg)';
+      } else {
+        content.classList.add('show');
+        if (arrow) arrow.style.transform = 'rotate(180deg)';
+      }
+    };
+
+    window.openSaranModal = function() {
+      document.getElementById('saranModal').style.display = 'flex';
+    };
+
+    window.closeSaranModal = function() {
+      document.getElementById('saranModal').style.display = 'none';
+    };
+
+    window.kirimSaran = function(e) {
+      e.preventDefault();
+      const nama = document.getElementById('saranNama').value;
+      const kontak = document.getElementById('saranKontak').value;
+      const pesan = document.getElementById('saranPesan').value;
+
+      const newSaranRef = push(ref(db, 'pesan_saran'));
+      set(newSaranRef, {
+        nama: nama,
+        kontak: kontak,
+        pesan: pesan,
+        tanggal: new Date().toLocaleDateString('id-ID'),
+        status: 'Baru'
+      }).then(() => {
+        alert('Terima kasih! Pesan/Saran Anda berhasil dikirim.');
+        document.getElementById('saranForm').reset();
+        window.closeSaranModal();
+      }).catch(err => {
+        alert('Gagal mengirim saran: ' + err.message);
+      });
+    };
+
+    // UPDATE TAMPILAN ELEMEN AKTIF FILTER KATEGORI
+    function updateFilterUI(category) {
+      document.querySelectorAll('.legend-item').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.cat-pill').forEach(el => {
+        el.className = 'cat-pill';
+      });
+
+      if (category === 'ALL') {
+        const sideEl = document.getElementById('side-cat-all');
+        const botEl = document.getElementById('bottom-cat-all');
+        if (sideEl) sideEl.classList.add('active');
+        if (botEl) botEl.className = 'cat-pill active all';
+      } else if (category === 'ProKlim Pratama') {
+        const sideEl = document.getElementById('side-cat-pratama');
+        const botEl = document.getElementById('bottom-cat-pratama');
+        if (sideEl) sideEl.classList.add('active');
+        if (botEl) botEl.className = 'cat-pill active pratama';
+      } else if (category === 'ProKlim Madya') {
+        const sideEl = document.getElementById('side-cat-madya');
+        const botEl = document.getElementById('bottom-cat-madya');
+        if (sideEl) sideEl.classList.add('active');
+        if (botEl) botEl.className = 'cat-pill active madya';
+      } else if (category === 'ProKlim Utama') {
+        const sideEl = document.getElementById('side-cat-utama');
+        const botEl = document.getElementById('bottom-cat-utama');
+        if (sideEl) sideEl.classList.add('active');
+        if (botEl) botEl.className = 'cat-pill active utama';
+      } else if (category === 'ProKlim Lestari') {
+        const sideEl = document.getElementById('side-cat-lestari');
+        const botEl = document.getElementById('bottom-cat-lestari');
+        if (sideEl) sideEl.classList.add('active');
+        if (botEl) botEl.className = 'cat-pill active lestari';
+      }
+    }
+
+    // FUNGSI DESAIN FORMAT KEGIATAN BERWARNA UNTUK ACCORDION
+    function formatKegiatanBerwarna(text, type) {
+      if (!text) return '<div class="popup-kegiatan-tag"><i class="fas fa-info-circle"></i> Belum ada data</div>';
+      const icon = type === 'adaptasi' ? 'fa-leaf' : 'fa-recycle';
+      return text
+        .split(',')
+        .map(item => item.trim())
+        .filter(item => item.length > 0)
+        .map(item => `<div class="popup-kegiatan-tag"><i class="fas ${icon}" style="font-size:9px; margin-top:2px;"></i> <span>${item}</span></div>`)
+        .join('');
+    }
+
+    // FUNGSI FORMAT TEKS KELEMBAGAAN PER BARIS
+    function formatKelembagaanText(text) {
+      if (!text) return '-';
+      return text.replace(/(\d+[\.\)])/g, '\n$1').trim();
+    }
+
+    // FUNGSI KONVERSI LINK GOOGLE DRIVE KE DIRECT IMAGE URL
+    function convertDriveUrl(url) {
+      if (!url) return '';
+      if (url.includes('drive.google.com')) {
+        const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) {
+          return `https://lh3.googleusercontent.com/d/${match[1]}`;
+        }
+      }
+      return url;
+    }
+
+    // INISIALISASI PETA LEAFLET
+    function initMap() {
+      if (mapInitialized) return;
+
+      map = L.map('publicMap', {
+        center: AMBON_CENTER,
+        zoom: AMBON_ZOOM,
+        zoomControl: true
+      });
+
+      const osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap contributors'
+      });
+
+      const esriImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: 'Tiles &copy; Esri'
+      });
+
+      const esriLabels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: ''
+      });
+
+      const esriSatelitHybrid = L.layerGroup([esriImagery, esriLabels]);
+
+      osmStandard.addTo(map);
+
+      const baseMaps = {
+        "Peta Jalan Standard": osmStandard,
+        "Peta Satelit Lengkap": esriSatelitHybrid
+      };
+
+      L.control.layers(baseMaps, null, { position: 'topright' }).addTo(map);
+
+      markersGroup = L.layerGroup().addTo(map);
+      mapInitialized = true;
+
+      if (cachedProklimData.length > 0) {
+        window.filterMapCategory(currentCategoryFilter);
+      }
+    }
+
+    // POPULATE DROPDOWN TAHUN PEMUTAKHIRAN
+    function populateTahunDropdown(data) {
+      const select = document.getElementById('filterTahun');
+      const years = new Set();
+
+      data.forEach(item => {
+        if (item.tahun) years.add(item.tahun);
+      });
+
+      const sortedYears = Array.from(years).sort((a, b) => b - a);
+      
+      select.innerHTML = '<option value="ALL">Semua Tahun</option>';
+      sortedYears.forEach(yr => {
+        const opt = document.createElement('option');
+        opt.value = yr;
+        opt.textContent = `Tahun ${yr}`;
+        select.appendChild(opt);
+      });
+    }
+
+    // UPDATE STATISTIK & GRAFIK DASHBOARD
+    function updateDashboard(data, updateDropdown = true) {
+      document.getElementById('statTotalTitik').textContent = data.length;
+
+      if (updateDropdown) populateTahunDropdown(cachedProklimData);
+
+      const kecCounts = {};
+      let pratamaCount = 0;
+      let madyaCount = 0;
+      let utamaCount = 0;
+      let lestariCount = 0;
+
+      data.forEach(item => {
+        if (item.kategori === 'ProKlim Pratama') pratamaCount++;
+        else if (item.kategori === 'ProKlim Madya') madyaCount++;
+        else if (item.kategori === 'ProKlim Utama') utamaCount++;
+        else if (item.kategori === 'ProKlim Lestari') lestariCount++;
+
+        if (item.kecamatan) {
+          kecCounts[item.kecamatan] = (kecCounts[item.kecamatan] || 0) + 1;
+        }
+      });
+
+      const kecList = Object.keys(kecCounts);
+      const kecValues = Object.values(kecCounts);
+
+      document.getElementById('statTotalKecamatan').textContent = kecList.length;
+      document.getElementById('statPratama').textContent = pratamaCount;
+      document.getElementById('statMadya').textContent = madyaCount;
+      document.getElementById('statUtama').textContent = utamaCount;
+      document.getElementById('statLestari').textContent = lestariCount;
+
+      const paletteColors = [
+        '#2563eb', '#059669', '#d97706', '#7c3aed', '#dc2626', '#0891b2', '#ea580c', '#4f46e5'
+      ];
+
+      const bgColors = kecList.map((_, index) => paletteColors[index % paletteColors.length]);
+
+      const ctx = document.getElementById('kecamatanChart').getContext('2d');
+      if (myChart) {
+        myChart.destroy();
+      }
+
+      myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: kecList.length > 0 ? kecList : ['Tidak Ada Data'],
+          datasets: [{
+            label: 'Jumlah Lokasi ProKlim',
+            data: kecValues.length > 0 ? kecValues : [0],
+            backgroundColor: bgColors,
+            borderColor: bgColors,
+            borderWidth: 1,
+            borderRadius: 8,
+            borderSkipped: false,
+            barPercentage: 0.45,
+            categoryPercentage: 0.6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#0f172a',
+              titleFont: { family: 'Plus Jakarta Sans', size: 13, weight: '700' },
+              bodyFont: { family: 'Plus Jakarta Sans', size: 12 },
+              padding: 10,
+              cornerRadius: 8,
+              displayColors: false,
+              callbacks: {
+                label: function(context) {
+                  return ` Total Lokasi: ${context.parsed.y} Titik`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              grid: { display: false },
+              ticks: { font: { family: 'Plus Jakarta Sans', size: 12, weight: '600' }, color: '#475569' }
+            },
+            y: {
+              beginAtZero: true,
+              grid: { color: '#f1f5f9', drawBorder: false },
+              ticks: { precision: 0, stepSize: 1, font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#64748b' }
+            }
+          }
+        }
+      });
+    }
+
+    // REALTIME DATABASE LISTENER
+    const proklimRef = ref(db, 'data_proklim');
+    onValue(proklimRef, (snapshot) => {
+      const dataVal = snapshot.val();
+      const proklimList = [];
+
+      if (dataVal) {
+        Object.keys(dataVal).forEach(key => {
+          proklimList.push({
+            id: key,
+            ...dataVal[key]
+          });
+        });
+      }
+
+      cachedProklimData = proklimList;
+      updateDashboard(proklimList, true);
+
+      if (mapInitialized) {
+        window.filterMapCategory(currentCategoryFilter);
+      }
+    });
+
+    // RENDER TITIK PETA DENGAN STRUKTUR POPUP
+    function renderMapData(data) {
+      if (!mapInitialized) return;
+
+      markersGroup.clearLayers();
+      allMarkersMap = {};
+
+      data.forEach((item, index) => {
+        if (item.lat && item.long) {
+          let warnaMarker = '#22c55e';
+          let badgeColor = '#22c55e';
+
+          if (item.kategori === 'ProKlim Madya') { warnaMarker = '#eab308'; badgeColor = '#ca8a04'; }
+          else if (item.kategori === 'ProKlim Utama') { warnaMarker = '#ef4444'; badgeColor = '#dc2626'; }
+          else if (item.kategori === 'ProKlim Lestari') { warnaMarker = '#a855f7'; badgeColor = '#9333ea'; }
+
+          const customIcon = L.divIcon({
+            className: 'custom-proklim-pin',
+            html: `<div style="
+              background-color: ${warnaMarker};
+              width: 20px;
+              height: 20px;
+              border-radius: 50%;
+              border: 3px solid #ffffff;
+              box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+            "></div>`,
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+          });
+
+          const imageUrl = convertDriveUrl(item.foto);
+          const adaptasiFormatted = formatKegiatanBerwarna(item.adaptasi, 'adaptasi');
+          const mitigasiFormatted = formatKegiatanBerwarna(item.mitigasi, 'mitigasi');
+          const kelembagaanFormatted = formatKelembagaanText(item.kelembagaan);
+
+          const popupContent = `
+            <div class="popup-card" id="popup-card-${index}">
+              <div class="popup-hero">
+                <img src="${imageUrl}" onerror="this.src='https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=500&auto=format&fit=crop&q=60';">
+                <div class="popup-hero-overlay"></div>
+                <span class="popup-badge-kat" style="background-color: ${badgeColor};">${item.kategori || 'ProKlim'}</span>
+                <div class="popup-header-info">
+                  <h4>${item.nama}</h4>
+                </div>
+              </div>
+
+              <div class="popup-body">
+                <div class="popup-meta-grid">
+                  <div class="popup-meta-item">
+                    <strong>Kecamatan</strong>
+                    ${item.kecamatan || '-'}
+                  </div>
+                  <div class="popup-meta-item">
+                    <strong>Tahun</strong>
+                    ${item.tahun || '-'}
+                  </div>
+                  <div class="popup-meta-item" style="grid-column: span 2;">
+                    <strong>Kelembagaan</strong>
+                    <div class="popup-text-multiline">${kelembagaanFormatted}</div>
+                  </div>
+                  <div class="popup-meta-item" style="grid-column: span 2;">
+                    <strong>Alamat / Detail Lokasi</strong>
+                    <div class="popup-text-multiline">${item.alamat || '-'}</div>
+                  </div>
+                </div>
+
+                <div class="popup-accordion-item">
+                  <button class="popup-accordion-header adaptasi-btn" onclick="toggleAccordion('pub-adaptasi-${index}')">
+                    <span><i class="fas fa-seedling"></i> Aksi Adaptasi Iklim</span>
+                    <i class="fas fa-chevron-down arrow-icon"></i>
+                  </button>
+                  <div id="pub-adaptasi-${index}" class="popup-accordion-body adaptasi-bg">
+                    <div class="popup-kegiatan-list">
+                      ${adaptasiFormatted}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="popup-accordion-item">
+                  <button class="popup-accordion-header mitigasi-btn" onclick="toggleAccordion('pub-mitigasi-${index}')">
+                    <span><i class="fas fa-solar-panel"></i> Aksi Mitigasi Iklim</span>
+                    <i class="fas fa-chevron-down arrow-icon"></i>
+                  </button>
+                  <div id="pub-mitigasi-${index}" class="popup-accordion-body mitigasi-bg">
+                    <div class="popup-kegiatan-list">
+                      ${mitigasiFormatted}
+                    </div>
+                  </div>
+                </div>
+
+                ${item.gdrivePublik ? `
+                  <a href="${item.gdrivePublik}" target="_blank" class="popup-drive-btn">
+                    <i class="fab fa-google-drive"></i> Lihat Dokumentasi Foto / Berkas
+                  </a>
+                ` : ''}
+              </div>
+            </div>
+          `;
+
+          const marker = L.marker([parseFloat(item.lat), parseFloat(item.long)], { icon: customIcon })
+            .addTo(markersGroup)
+            .bindPopup(popupContent);
+
+          marker.on('popupopen', function(e) {
+            const popupNode = e.popup.getElement();
+            if (popupNode) {
+              L.DomEvent.disableScrollPropagation(popupNode);
+              L.DomEvent.disableClickPropagation(popupNode);
+            }
+          });
+
+          if (item.nama) {
+            allMarkersMap[item.nama.toLowerCase()] = { marker, lat: item.lat, long: item.long };
+          }
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Petugas - SIMPROKLIM Kota Ambon</title>
+    <!-- Bootstrap 5 CSS & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            min-height: 100vh;
+            width: 100vw;
+            margin: 0;
+            padding: 0;
+            background: #cbd5e1;
+            color: #0f2942;
+            overflow-x: hidden;
+        }
+
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.25rem;
+        }
+
+        /* BACKGROUND GRADIENT NAVY-SLATE SEIRAMA DENGAN INDEX.HTML */
+        .gradient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background: radial-gradient(circle at 15% 15%, rgba(14, 116, 144, 0.28) 0%, transparent 50%),
+                        radial-gradient(circle at 85% 85%, rgba(16, 185, 129, 0.22) 0%, transparent 50%),
+                        radial-gradient(circle at 50% 50%, #e2e8f0 0%, #cbd5e1 100%);
+            animation: pulseBg 12s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulseBg {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.02); }
+        }
+
+        /* CANVAS JARINGAN NODES GIS */
+        #gisCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+            opacity: 0.85;
+        }
+
+        /* CARD LOGIN GLASSMORPHISM TERANG */
+        .card-login {
+            position: relative;
+            z-index: 2;
+            background: rgba(255, 255, 255, 0.72) !important;
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.88) !important;
+            border-radius: 24px;
+            color: #0f2942;
+            width: 100%;
+            max-width: 410px;
+            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12),
+                        inset 0 0 15px rgba(255, 255, 255, 0.6);
+            overflow: hidden;
+        }
+
+        .card-login::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(90deg, #d97706, #facc15);
+        }
+
+        /* IKON HEAD */
+        .icon-box-admin {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 20px;
+            background: rgba(234, 179, 8, 0.18);
+            border: 1px solid rgba(234, 179, 8, 0.45);
+            color: #b45309;
+            margin: 0 auto 0.75rem auto;
+        }
+
+        /* STYLING INPUT & ICON */
+        .input-group-text {
+            background-color: rgba(255, 255, 255, 0.85) !important;
+            border-color: rgba(148, 163, 184, 0.4) !important;
+            color: #475569 !important;
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
+        }
+
+        .form-control {
+            background-color: rgba(255, 255, 255, 0.8) !important;
+            border-color: rgba(148, 163, 184, 0.4) !important;
+            color: #0f2942 !important;
+            padding: 0.65rem 0.85rem;
+            font-weight: 500;
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+
+        .form-control:focus {
+            background-color: #ffffff !important;
+            border-color: #d97706 !important;
+            box-shadow: 0 0 12px rgba(217, 119, 6, 0.25);
+            color: #0f2942 !important;
+        }
+
+        .form-control::placeholder {
+            color: #94a3b8 !important;
+            font-weight: 400;
+        }
+
+        /* TOMBOL RESPONSIVE & GRADIENT */
+        .btn-login {
+            padding: 0.75rem;
+            font-size: 0.95rem;
+            letter-spacing: 0.3px;
+            background: linear-gradient(135deg, #d97706, #eab308);
+            border: none;
+            color: #ffffff !important;
+            font-weight: 700;
+            box-shadow: 0 6px 18px rgba(217, 119, 6, 0.35);
+            transition: all 0.3s ease;
+        }
+
+        .btn-login:hover {
+            background: linear-gradient(135deg, #b45309, #d97706);
+            box-shadow: 0 10px 24px rgba(217, 119, 6, 0.45);
+            transform: translateY(-2px);
+        }
+
+        .link-back {
+            color: #334155;
+            font-weight: 600;
+            transition: color 0.2s ease;
+        }
+
+        .link-back:hover {
+            color: #0284c7;
+        }
+
+        /* PENYESUAIAN MOBILE */
+        @media (max-width: 480px) {
+            .card-login {
+                padding: 1.5rem !important;
+                border-radius: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="gradient-bg"></div>
+<canvas id="gisCanvas"></canvas>
+
+<div class="card card-login p-4 p-sm-4">
+    <div class="text-center mb-4">
+        <div class="icon-box-admin">
+            <i class="bi bi-shield-lock-fill fs-2"></i>
+        </div>
+        <h4 class="fw-bold mb-1" style="font-size: 1.35rem; color: #0f2942;">Akses Pemerintah</h4>
+        <small class="fw-semibold opacity-75" style="font-size: 0.82rem; color: #334155;">Dinas Lingkungan Hidup & Persampahan</small>
+    </div>
+
+    <!-- Pesan Error jika login salah -->
+    <div id="errorMessage" class="alert alert-danger d-none py-2 small text-center rounded-3 mb-3" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i> <span id="errorText">Email atau password salah!</span>
+    </div>
+
+    <form id="loginForm">
+        <div class="mb-3">
+            <label class="form-label small fw-semibold" style="color: #0f2942;">Email Admin</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                <input type="email" class="form-control" id="email" placeholder="nama@ambon.go.id" required autocomplete="username">
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="form-label small fw-semibold" style="color: #0f2942;">Password</label>
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-key"></i></span>
+                <input type="password" class="form-control" id="password" placeholder="••••••••" required autocomplete="current-password">
+            </div>
+        </div>
+        <button type="submit" id="btnLogin" class="btn btn-warning btn-login w-100 rounded-pill mb-3">
+            Login Admin <i class="bi bi-box-arrow-in-right ms-1"></i>
+        </button>
+    </form>
+
+    <div class="text-center mt-2">
+        <a href="index.html" class="text-decoration-none small link-back">
+            <i class="bi bi-arrow-left me-1"></i>Kembali ke Portal Utama
+        </a>
+    </div>
+</div>
+
+<!-- FIREBASE SDK (COMPAT) -->
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+<script>
+    // KONFIGURASI FIREBASE UTUH DARI PROJECT SETTINGS KAMU
+    const firebaseConfig = {
+        apiKey: "AIzaSyA2wICAjpo6cGlEPLSCU0tmAdlwqaFHvho",
+        authDomain: "simproklim-ambon.firebaseapp.com",
+        databaseURL: "https://simproklim-ambon-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "simproklim-ambon",
+        storageBucket: "simproklim-ambon.firebasestorage.app",
+        messagingSenderId: "185945532311",
+        appId: "1:185945532311:web:213b8511e2b4a6561986d2"
+    };
+
+    // INISIALISASI FIREBASE
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const database = firebase.database();
+
+    // SCRIPT ANIMASI JARINGAN GIS
+    const canvas = document.getElementById('gisCanvas');
+    const ctx = canvas.getContext('2d');
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const nodes = [];
+    const nodeCount = window.innerWidth < 768 ? 24 : 48;
+
+    for (let i = 0; i < nodeCount; i++) {
+        nodes.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            vx: (Math.random() - 0.5) * 0.5,
+            vy: (Math.random() - 0.5) * 0.5,
+            radius: Math.random() * 2 + 1
+        });
+    }
+
+    function drawGISNodes() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+                const dx = nodes[i].x - nodes[j].x;
+                const dy = nodes[i].y - nodes[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 135) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(14, 116, 144, ${0.28 * (1 - dist / 135)})`;
+                    ctx.lineWidth = 0.8;
+                    ctx.moveTo(nodes[i].x, nodes[i].y);
+                    ctx.lineTo(nodes[j].x, nodes[j].y);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        nodes.forEach(node => {
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#0284c7';
+            ctx.fill();
+
+            node.x += node.vx;
+            node.y += node.vy;
+
+            if (node.x < 0 || node.x > canvas.width) node.vx *= -1;
+            if (node.y < 0 || node.y > canvas.height) node.vy *= -1;
+        });
+
+        requestAnimationFrame(drawGISNodes);
+    }
+
+    drawGISNodes();
+
+    // SCRIPT PENGECEKAN LOGIN DENGAN FIREBASE AUTHENTICATION
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const emailInput = document.getElementById('email').value.trim();
+        const passwordInput = document.getElementById('password').value;
+        const errorAlert = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const btnLogin = document.getElementById('btnLogin');
+
+        // Indikator Loading
+        btnLogin.disabled = true;
+        btnLogin.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status"></span> Memeriksa...`;
+        errorAlert.classList.add('d-none');
+
+        // Set Persistence ke SESSION agar login hanya aktif di tab saat ini saja
+        auth.setPersistence(firebase.auth.Auth.Persistence.SESSION)
+            .then(() => {
+                return auth.signInWithEmailAndPassword(emailInput, passwordInput);
+            })
+            .then((userCredential) => {
+                // Login Berhasil
+                window.location.href = 'admin.html';
+            })
+            .catch((error) => {
+                // Login Gagal
+                btnLogin.disabled = false;
+                btnLogin.innerHTML = `Login Admin <i class="bi bi-box-arrow-in-right ms-1"></i>`;
+                errorAlert.classList.remove('d-none');
+
+                if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    errorText.innerText = "Email atau password salah!";
+                } else if (error.code === 'auth/invalid-email') {
+                    errorText.innerText = "Format email tidak valid!";
+                } else {
+                    errorText.innerText = "Terjadi kesalahan. Silakan coba lagi.";
+                }
+            });
+    });
+</script>
+
+</body>
+</html>
